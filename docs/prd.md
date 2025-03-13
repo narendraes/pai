@@ -246,162 +246,6 @@ The Private Home AI Assistant is an iOS application enabling secure home automat
   - Verification time < 10% of transfer
   - Compression ratio > 2:1
 
-// ... rest of existing code ... 
-
-5. Mac Automation Center
-```
-┌─────────────────────────┐
-│ Mac Control Hub         │
-├─────────────────────────┤
-│ Quick Actions:          │
-│ 📹 Start Recording      │
-│ ⏹️ Stop Recording       │
-│ 💾 Archive Media        │
-│ 🔄 Sync Files          │
-│                         │
-│ Automation Rules:       │
-│ ⏰ Schedule Recording   │
-│ 📦 Auto-Archive        │
-│ 🔍 Process New Media    │
-│                         │
-│ Storage Management:     │
-│ 📊 Space Available     │
-│ 📂 Archive Status      │
-└─────────────────────────┘
-```
-
-6. Continuous Recording
-```
-┌─────────────────────────┐
-│ Recording Control       │
-├─────────────────────────┤
-│ Status: ⏺️ Recording    │
-│ Duration: 02:34:15      │
-│ Storage: 45GB free      │
-│                         │
-│ Settings:               │
-│ 🎥 Quality: 1080p/30fps │
-│ 🔄 Split: 30min files   │
-│ 💾 Target: Local Drive  │
-│                         │
-│ Auto-Actions:           │
-│ • Archive at 80% full   │
-│ • Delete after archive  │
-│ • Notify on events     │
-└─────────────────────────┘
-```
-
-7. Storage Management
-```
-┌─────────────────────────┐
-│ Archive Manager         │
-├─────────────────────────┤
-│ Connected Drives:       │
-│ 💾 Flash Drive A (128GB)│
-│ 💾 Flash Drive B (256GB)│
-│                         │
-│ Auto-Archive Rules:     │
-│ • Daily at 2 AM        │
-│ • When storage < 20%   │
-│ • After 24h recording  │
-│                         │
-│ Archive Categories:     │
-│ 📸 Photos: 2.3GB       │
-│ 🎥 Videos: 45.6GB      │
-│ 📊 Analysis: 1.2GB     │
-└─────────────────────────┘
-```
-
-### 4.2 Feature Details
-
-#### Media Analysis Specifications
-- Support Formats:
-  - Images: JPG, PNG, HEIF
-  - Videos: MP4, MOV, MKV
-  - Max Size: 500MB per file
-- Analysis Capabilities:
-  - Real-time processing
-  - Batch processing
-  - Custom detection zones
-  - Event categorization
-
-#### Mac Automation Rules
-- Recording Triggers:
-  - Motion detection
-  - Time-based schedule
-  - Manual activation
-  - API webhook
-- Archive Automation:
-  - Storage thresholds
-  - Time-based rules
-  - Content-based rules
-  - Priority levels
-
-#### Continuous Recording
-- Recording Modes:
-  - High quality (1080p/30fps)
-  - Extended (720p/30fps)
-  - Night mode (IR enhanced)
-  - Low storage mode
-- File Management:
-  - Auto-splitting
-  - Auto-naming
-  - Meta-tagging
-  - Error recovery
-
-#### Storage Operations
-- Archive Protocols:
-  - Verification check
-  - Redundancy option
-  - Compression
-  - Encryption
-- Drive Management:
-  - Health monitoring
-  - Space optimization
-  - Error checking
-  - Recovery procedures
-
-### 4.3 Integration Flow
-```
-┌─────────────────┐
-│ Event Trigger   │
-└───────┬─────────┘
-        ▼
-┌─────────────────┐
-│ Record/Capture  │
-└───────┬─────────┘
-        ▼
-┌─────────────────┐
-│ Process Media   │
-└───────┬─────────┘
-        ▼
-┌─────────────────┐
-│ Analyze Content │
-└───────┬─────────┘
-        ▼
-┌─────────────────┐
-│ Generate Alert  │
-└───────┬─────────┘
-        ▼
-┌─────────────────┐
-│ Archive Data    │
-└─────────────────┘
-```
-
-### 4.4 Performance Requirements
-- Recording Performance:
-  - CPU usage < 20%
-  - RAM usage < 500MB
-  - Storage write < 10MB/s
-- Analysis Performance:
-  - Processing time < 5s/image
-  - Processing time < 1x video duration
-  - Batch processing < 100 files/hour
-- Archive Performance:
-  - Transfer speed > 50MB/s
-  - Verification time < 10% of transfer
-  - Compression ratio > 2:1
-
 ### 4.5 Privacy Features
 - Local data processing
 - No cloud storage
@@ -689,3 +533,30 @@ The Private Home AI Assistant is an iOS application enabling secure home automat
 - Conflict resolution
 - Offline queue
 - Cross-device notifications 
+
+// Recommended Package.swift structure
+dependencies: [
+    .package(url: "https://github.com/Alamofire/Alamofire.git", .upToNextMajor(from: "5.6.4")),
+    .package(url: "https://github.com/NMSSH/NMSSH.git", .upToNextMajor(from: "2.3.1")),
+    .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", .upToNextMajor(from: "1.6.0")),
+    // Additional dependencies with specific versions
+] 
+
+Project/
+├── App/
+├── Features/
+│   ├── Authentication/
+│   ├── Chat/
+│   ├── Camera/
+│   ├── Analysis/
+│   └── Storage/
+├── Core/
+│   ├── Network/
+│   ├── Security/
+│   └── Utils/
+├── Shared/
+│   ├── Components/
+│   ├── Extensions/
+│   ├── Protocols/
+│   └── DesignSystem/
+└── Resources/ 

@@ -1,69 +1,157 @@
 #!/bin/bash
 
-# Script to run the PrivateHomeAI app in the iOS simulator
+# Script to build and run Private Home AI on iOS Simulator
 
-# Colors for output
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+echo "Building and running Private Home AI on iOS Simulator..."
 
-echo -e "${BLUE}=== Private Home AI Simulator Runner ===${NC}"
-echo -e "${BLUE}This script will build and run the app in the iOS simulator${NC}"
+# Create a proper Xcode project with a target
+echo "Creating Xcode project with target..."
 
-# Check if Xcode is installed
-if ! command -v xcodebuild &> /dev/null; then
-    echo -e "${RED}Error: Xcode is not installed or not in PATH${NC}"
-    echo "Please install Xcode from the App Store or make sure it's in your PATH"
+# Create a temporary directory for the project
+TEMP_DIR="PrivateHomeAIRunner"
+mkdir -p "$TEMP_DIR"
+
+# Create the Swift files
+cat > "$TEMP_DIR/PrivateHomeAIRunnerApp.swift" << EOF
+import SwiftUI
+import PrivateHomeAI
+
+@main
+struct PrivateHomeAIRunnerApp: App {
+    @StateObject private var appState = AppState()
+    
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+                .environmentObject(appState)
+                .onAppear {
+                    // Check for jailbreak
+                    if JailbreakDetectionService.shared.isJailbroken() {
+                        appState.showJailbreakAlert = true
+                    }
+                }
+                .alert("Security Warning", isPresented: \$appState.showJailbreakAlert) {
+                    Button("Exit", role: .destructive) {
+                        exit(0)
+                    }
+                } message: {
+                    Text("This device appears to be jailbroken. For security reasons, this app cannot run on jailbroken devices.")
+                }
+        }
+    }
+}
+EOF
+
+# Create Info.plist
+cat > "$TEMP_DIR/Info.plist" << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSFaceIDUsageDescription</key>
+	<string>We use Face ID to securely authenticate you to the app.</string>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+	</dict>
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>armv7</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+</dict>
+</plist>
+EOF
+
+# Create a new Xcode project using Swift Package Manager
+echo "Creating Swift package for the runner app..."
+cat > "$TEMP_DIR/Package.swift" << EOF
+// swift-tools-version:5.7
+import PackageDescription
+
+let package = Package(
+    name: "PrivateHomeAIRunner",
+    platforms: [
+        .iOS(.v15)
+    ],
+    dependencies: [
+        .package(path: "../"),
+    ],
+    targets: [
+        .executableTarget(
+            name: "PrivateHomeAIRunner",
+            dependencies: [
+                .product(name: "PrivateHomeAI", package: "PrivateHomeAI")
+            ],
+            path: ".",
+            resources: [
+                .process("Info.plist")
+            ]
+        ),
+    ]
+)
+EOF
+
+# Find available simulators
+echo "Available iOS Simulators:"
+xcrun simctl list devices available | grep "iPhone"
+
+# Get the first available iPhone simulator
+SIMULATOR_ID=$(xcrun simctl list devices available | grep "iPhone" | head -1 | sed -E 's/.*\(([A-Z0-9-]+)\).*/\1/')
+
+if [ -z "$SIMULATOR_ID" ]; then
+    echo "No available iPhone simulator found."
     exit 1
 fi
 
-# Get available simulators
-echo -e "${BLUE}Fetching available simulators...${NC}"
-SIMULATORS=$(xcrun simctl list devices available | grep -v "unavailable" | grep "iPhone")
+echo "Using simulator: $SIMULATOR_ID"
 
-# Check if any simulators are available
-if [ -z "$SIMULATORS" ]; then
-    echo -e "${RED}Error: No iPhone simulators found${NC}"
-    echo "Please create an iPhone simulator in Xcode before running this script"
-    exit 1
-fi
-
-# Display available simulators
-echo -e "${GREEN}Available iPhone simulators:${NC}"
-echo "$SIMULATORS" | grep -v "unavailable" | awk -F '[()]' '{print $1}' | awk '{$1=$1};1' | nl -w2 -s") "
-
-# Ask user to select a simulator
-echo -e "${BLUE}Enter the number of the simulator you want to use:${NC}"
-read -r SIMULATOR_NUM
-
-# Get the selected simulator name
-SIMULATOR_NAME=$(echo "$SIMULATORS" | awk -F '[()]' '{print $1}' | awk '{$1=$1};1' | sed -n "${SIMULATOR_NUM}p")
-SIMULATOR_UDID=$(echo "$SIMULATORS" | sed -n "${SIMULATOR_NUM}p" | awk -F '[()]' '{print $2}')
-
-if [ -z "$SIMULATOR_NAME" ]; then
-    echo -e "${RED}Error: Invalid simulator selection${NC}"
-    exit 1
-fi
-
-echo -e "${GREEN}Selected simulator: $SIMULATOR_NAME ($SIMULATOR_UDID)${NC}"
-
-# Build the app
-echo -e "${BLUE}Building the app...${NC}"
-xcodebuild -project PrivateHomeAI.xcodeproj -scheme PrivateHomeAI -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" build
+# Build the app for the simulator
+echo "Building the app for the simulator..."
+(cd "$TEMP_DIR" && swift build -Xswiftc "-sdk" -Xswiftc "$(xcrun --sdk iphonesimulator --show-sdk-path)" -Xswiftc "-target" -Xswiftc "x86_64-apple-ios15.0-simulator")
 
 # Check if build was successful
 if [ $? -ne 0 ]; then
-    echo -e "${RED}Error: Build failed${NC}"
+    echo "Build failed. Please check the error messages above."
     exit 1
 fi
 
-# Run the app in the simulator
-echo -e "${BLUE}Launching simulator...${NC}"
-xcrun simctl boot "$SIMULATOR_UDID" 2>/dev/null || true
-echo -e "${BLUE}Installing and launching the app...${NC}"
-xcrun simctl install "$SIMULATOR_UDID" build/Debug-iphonesimulator/PrivateHomeAI.app
-xcrun simctl launch "$SIMULATOR_UDID" com.privatehomeai.app
+# Launch the simulator
+echo "Launching simulator..."
+xcrun simctl boot "$SIMULATOR_ID" || true
 
-echo -e "${GREEN}App launched successfully!${NC}"
-echo -e "${BLUE}You can now interact with the Private Home AI app in the simulator${NC}" 
+# Install the app
+echo "Installing app on simulator..."
+xcrun simctl install "$SIMULATOR_ID" "$TEMP_DIR/.build/debug/PrivateHomeAIRunner"
+
+# Launch the app
+echo "Launching app on simulator..."
+xcrun simctl launch "$SIMULATOR_ID" "PrivateHomeAIRunner"
+
+echo "Done! The Private Home AI app should now be running in the simulator." 

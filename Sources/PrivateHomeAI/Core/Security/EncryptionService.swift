@@ -1,91 +1,138 @@
 import Foundation
 import CryptoSwift
 
-protocol EncryptionServiceProtocol {
-    func encrypt(_ data: Data, with key: String) throws -> Data
-    func decrypt(_ data: Data, with key: String) throws -> Data
-    func generateRandomKey(length: Int) -> String
-    func hashPassword(_ password: String, salt: String) throws -> String
-}
-
-class EncryptionService: EncryptionServiceProtocol {
-    private let ivSize = 16 // AES block size
+/// Service for encrypting and decrypting data
+class EncryptionService {
+    /// Shared instance for singleton access
+    static let shared = EncryptionService()
     
-    func encrypt(_ data: Data, with key: String) throws -> Data {
-        guard let keyData = key.data(using: .utf8) else {
-            throw SecurityError.invalidKey
+    /// Key size in bytes (256 bits)
+    private let keySize = 32
+    
+    /// IV size in bytes (128 bits)
+    private let ivSize = 16
+    
+    /// Key identifier in the Keychain
+    private let keyIdentifier = "encryption_key"
+    
+    /// Private initializer for singleton pattern
+    private init() {
+        // Ensure encryption key exists
+        if !hasEncryptionKey() {
+            _ = generateEncryptionKey()
+        }
+    }
+    
+    /// Check if an encryption key exists
+    /// - Returns: True if a key exists, false otherwise
+    func hasEncryptionKey() -> Bool {
+        return KeychainService.shared.exists(for: keyIdentifier)
+    }
+    
+    /// Generate a new encryption key
+    /// - Returns: True if successful, false otherwise
+    @discardableResult
+    func generateEncryptionKey() -> Bool {
+        // Generate random key
+        var keyData = Data(count: keySize)
+        let result = keyData.withUnsafeMutableBytes { pointer in
+            SecRandomCopyBytes(kSecRandomDefault, keySize, pointer.baseAddress!)
         }
         
-        // Generate random IV
-        let iv = AES.randomIV(ivSize)
+        guard result == errSecSuccess else {
+            return false
+        }
+        
+        // Save key to Keychain
+        return KeychainService.shared.save(data: keyData, for: keyIdentifier)
+    }
+    
+    /// Encrypt data using AES-GCM
+    /// - Parameter data: The data to encrypt
+    /// - Returns: The encrypted data, or nil if encryption fails
+    func encrypt(_ data: Data) -> Data? {
+        guard let key = retrieveEncryptionKey() else {
+            return nil
+        }
         
         do {
-            // Create AES instance
-            let aes = try AES(key: keyData.bytes, blockMode: CBC(iv: iv))
+            // Generate random IV
+            var iv = Data(count: ivSize)
+            let result = iv.withUnsafeMutableBytes { pointer in
+                SecRandomCopyBytes(kSecRandomDefault, ivSize, pointer.baseAddress!)
+            }
+            
+            guard result == errSecSuccess else {
+                return nil
+            }
+            
+            // Create AES-GCM cipher
+            let gcm = GCM(iv: iv.bytes, mode: .combined)
+            let aes = try AES(key: key.bytes, blockMode: gcm, padding: .pkcs7)
             
             // Encrypt data
-            let encryptedBytes = try aes.encrypt(data.bytes)
+            let ciphertext = try aes.encrypt(data.bytes)
             
-            // Combine IV and encrypted data
-            var encryptedData = Data(iv)
-            encryptedData.append(Data(encryptedBytes))
-            
-            return encryptedData
+            // Return IV + ciphertext
+            return Data(iv.bytes + ciphertext)
         } catch {
-            throw SecurityError.encryptionFailed(error)
+            return nil
         }
     }
     
-    func decrypt(_ data: Data, with key: String) throws -> Data {
-        guard let keyData = key.data(using: .utf8) else {
-            throw SecurityError.invalidKey
+    /// Encrypt a string using AES-GCM
+    /// - Parameter string: The string to encrypt
+    /// - Returns: The encrypted data as a base64 string, or nil if encryption fails
+    func encrypt(_ string: String) -> String? {
+        guard let data = string.data(using: .utf8),
+              let encryptedData = encrypt(data) else {
+            return nil
         }
         
-        // Ensure data is large enough to contain IV and encrypted content
-        guard data.count > ivSize else {
-            throw SecurityError.decryptionFailed(NSError(domain: "EncryptionService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Data too short"]))
+        return encryptedData.base64EncodedString()
+    }
+    
+    /// Decrypt data using AES-GCM
+    /// - Parameter encryptedData: The encrypted data (IV + ciphertext)
+    /// - Returns: The decrypted data, or nil if decryption fails
+    func decrypt(_ encryptedData: Data) -> Data? {
+        guard let key = retrieveEncryptionKey(),
+              encryptedData.count > ivSize else {
+            return nil
         }
-        
-        // Extract IV and encrypted data
-        let iv = data.prefix(ivSize).bytes
-        let encryptedBytes = data.suffix(from: ivSize).bytes
         
         do {
-            // Create AES instance
-            let aes = try AES(key: keyData.bytes, blockMode: CBC(iv: iv))
+            // Extract IV and ciphertext
+            let iv = encryptedData.prefix(ivSize)
+            let ciphertext = encryptedData.suffix(from: ivSize)
+            
+            // Create AES-GCM cipher
+            let gcm = GCM(iv: iv.bytes, mode: .combined)
+            let aes = try AES(key: key.bytes, blockMode: gcm, padding: .pkcs7)
             
             // Decrypt data
-            let decryptedBytes = try aes.decrypt(encryptedBytes)
-            
+            let decryptedBytes = try aes.decrypt(ciphertext.bytes)
             return Data(decryptedBytes)
         } catch {
-            throw SecurityError.decryptionFailed(error)
+            return nil
         }
     }
     
-    func generateRandomKey(length: Int) -> String {
-        let letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,./<>?"
-        return String((0..<length).map { _ in letters.randomElement()! })
-    }
-    
-    func hashPassword(_ password: String, salt: String) throws -> String {
-        guard let passwordData = password.data(using: .utf8),
-              let saltData = salt.data(using: .utf8) else {
-            throw SecurityError.dataConversionFailed
+    /// Decrypt a base64 string using AES-GCM
+    /// - Parameter base64String: The encrypted data as a base64 string
+    /// - Returns: The decrypted string, or nil if decryption fails
+    func decrypt(_ base64String: String) -> String? {
+        guard let encryptedData = Data(base64Encoded: base64String),
+              let decryptedData = decrypt(encryptedData) else {
+            return nil
         }
         
-        do {
-            // Combine password and salt
-            var combinedData = passwordData
-            combinedData.append(saltData)
-            
-            // Hash using SHA-256
-            let digest = SHA2(variant: .sha256)
-            let hash = try digest.calculate(for: combinedData.bytes)
-            
-            return hash.toHexString()
-        } catch {
-            throw SecurityError.encryptionFailed(error)
-        }
+        return String(data: decryptedData, encoding: .utf8)
+    }
+    
+    /// Retrieve the encryption key from the Keychain
+    /// - Returns: The encryption key, or nil if not found
+    private func retrieveEncryptionKey() -> Data? {
+        return KeychainService.shared.retrieveData(for: keyIdentifier)
     }
 } 

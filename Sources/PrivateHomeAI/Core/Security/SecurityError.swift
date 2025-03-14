@@ -1,33 +1,34 @@
 import Foundation
 
+/// Security-related errors
 enum SecurityError: Error, LocalizedError {
-    case encryptionFailed(Error)
-    case decryptionFailed(Error)
+    case encryptionFailed
+    case decryptionFailed
     case keychainError(OSStatus)
     case dataConversionFailed
     case invalidKey
     case jailbreakDetected
     case biometricAuthFailed
-    case unknown(Error)
+    case unknown
     
     var errorDescription: String? {
         switch self {
-        case .encryptionFailed(let error):
-            return "Encryption failed: \(error.localizedDescription)"
-        case .decryptionFailed(let error):
-            return "Decryption failed: \(error.localizedDescription)"
+        case .encryptionFailed:
+            return "Failed to encrypt data"
+        case .decryptionFailed:
+            return "Failed to decrypt data"
         case .keychainError(let status):
-            return "Keychain error with status: \(status)"
+            return "Keychain error: \(status)"
         case .dataConversionFailed:
             return "Failed to convert data"
         case .invalidKey:
             return "Invalid encryption key"
         case .jailbreakDetected:
-            return "Device jailbreak detected"
+            return "Jailbreak detected"
         case .biometricAuthFailed:
             return "Biometric authentication failed"
-        case .unknown(let error):
-            return "Unknown security error: \(error.localizedDescription)"
+        case .unknown:
+            return "Unknown security error"
         }
     }
 } 

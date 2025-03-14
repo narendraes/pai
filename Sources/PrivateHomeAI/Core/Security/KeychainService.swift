@@ -1,83 +1,165 @@
 import Foundation
 import Security
 
-protocol KeychainServiceProtocol {
-    func save(key: String, data: Data) throws
-    func load(key: String) throws -> Data?
-    func delete(key: String) throws
-    func clear() throws
-}
-
-class KeychainService: KeychainServiceProtocol {
-    private let service: String
+/// Service for secure credential storage using the Keychain
+class KeychainService {
+    /// Shared instance
+    static let shared = KeychainService()
     
-    init(service: String = Bundle.main.bundleIdentifier ?? "com.privatehomeai") {
-        self.service = service
+    /// Service name for keychain items
+    private let serviceName = "com.privateai.home"
+    
+    /// Private initializer for singleton
+    private init() {}
+    
+    /// Save a string value to the keychain
+    /// - Parameters:
+    ///   - value: String value to save
+    ///   - key: Key to associate with the value
+    /// - Returns: True if successful, false otherwise
+    @discardableResult
+    func save(value: String, for key: String) -> Bool {
+        guard let data = value.data(using: .utf8) else {
+            return false
+        }
+        return save(data: data, for: key)
     }
     
-    func save(key: String, data: Data) throws {
-        // First try to update existing item
-        var query = baseQuery(for: key)
-        var status = SecItemUpdate(query as CFDictionary, [kSecValueData: data] as CFDictionary)
+    /// Save data to the keychain
+    /// - Parameters:
+    ///   - data: Data to save
+    ///   - key: Key to associate with the data
+    /// - Returns: True if successful, false otherwise
+    @discardableResult
+    func save(data: Data, for key: String) -> Bool {
+        // Delete existing item if it exists
+        delete(for: key)
         
-        // If item doesn't exist, add it
-        if status == errSecItemNotFound {
-            query[kSecValueData as String] = data
-            status = SecItemAdd(query as CFDictionary, nil)
-        }
+        // Create query dictionary
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: serviceName,
+            kSecAttrAccount as String: key,
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        ]
         
-        guard status == errSecSuccess else {
-            throw SecurityError.keychainError(status)
-        }
+        // Add item to keychain
+        let status = SecItemAdd(query as CFDictionary, nil)
+        return status == errSecSuccess
     }
     
-    func load(key: String) throws -> Data? {
-        var query = baseQuery(for: key)
-        query[kSecReturnData as String] = true
-        query[kSecMatchLimit as String] = kSecMatchLimitOne
+    /// Retrieve a string value from the keychain
+    /// - Parameter key: Key associated with the value
+    /// - Returns: String value if found, nil otherwise
+    func retrieveString(for key: String) -> String? {
+        guard let data = retrieveData(for: key) else {
+            return nil
+        }
+        return String(data: data, encoding: .utf8)
+    }
+    
+    /// Retrieve data from the keychain
+    /// - Parameter key: Key associated with the data
+    /// - Returns: Data if found, nil otherwise
+    func retrieveData(for key: String) -> Data? {
+        // Create query dictionary
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: serviceName,
+            kSecAttrAccount as String: key,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
         
+        // Query keychain
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
         
-        if status == errSecItemNotFound {
-            return nil
+        // Check result
+        if status == errSecSuccess, let data = result as? Data {
+            return data
         }
-        
-        guard status == errSecSuccess else {
-            throw SecurityError.keychainError(status)
-        }
-        
-        return result as? Data
+        return nil
     }
     
-    func delete(key: String) throws {
-        let query = baseQuery(for: key)
-        let status = SecItemDelete(query as CFDictionary)
-        
-        guard status == errSecSuccess || status == errSecItemNotFound else {
-            throw SecurityError.keychainError(status)
-        }
-    }
-    
-    func clear() throws {
-        let query = [
+    /// Delete an item from the keychain
+    /// - Parameter key: Key associated with the item
+    /// - Returns: True if successful, false otherwise
+    @discardableResult
+    func delete(for key: String) -> Bool {
+        // Create query dictionary
+        let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service
-        ] as [String: Any]
-        
-        let status = SecItemDelete(query as CFDictionary)
-        
-        guard status == errSecSuccess || status == errSecItemNotFound else {
-            throw SecurityError.keychainError(status)
-        }
-    }
-    
-    private func baseQuery(for key: String) -> [String: Any] {
-        return [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: key,
-            kSecAttrService as String: service,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
+            kSecAttrService as String: serviceName,
+            kSecAttrAccount as String: key
         ]
+        
+        // Delete item from keychain
+        let status = SecItemDelete(query as CFDictionary)
+        return status == errSecSuccess || status == errSecItemNotFound
+    }
+    
+    /// Check if an item exists in the keychain
+    /// - Parameter key: Key to check
+    /// - Returns: True if the item exists, false otherwise
+    func exists(for key: String) -> Bool {
+        // Create query dictionary
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: serviceName,
+            kSecAttrAccount as String: key,
+            kSecReturnData as String: false,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        
+        // Query keychain
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        
+        return status == errSecSuccess
+    }
+    
+    /// Update an existing item in the keychain
+    /// - Parameters:
+    ///   - value: New string value
+    ///   - key: Key associated with the item
+    /// - Returns: True if successful, false otherwise
+    @discardableResult
+    func update(value: String, for key: String) -> Bool {
+        guard let data = value.data(using: .utf8) else {
+            return false
+        }
+        return update(data: data, for: key)
+    }
+    
+    /// Update an existing item in the keychain
+    /// - Parameters:
+    ///   - data: New data
+    ///   - key: Key associated with the item
+    /// - Returns: True if successful, false otherwise
+    @discardableResult
+    func update(data: Data, for key: String) -> Bool {
+        // Create query dictionary
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: serviceName,
+            kSecAttrAccount as String: key
+        ]
+        
+        // Create update dictionary
+        let attributes: [String: Any] = [
+            kSecValueData as String: data
+        ]
+        
+        // Update item in keychain
+        let status = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
+        
+        // If item doesn't exist, create it
+        if status == errSecItemNotFound {
+            return save(data: data, for: key)
+        }
+        
+        return status == errSecSuccess
     }
 } 

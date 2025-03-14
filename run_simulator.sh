@@ -7,10 +7,11 @@ echo "Building and running Private Home AI on iOS Simulator..."
 # Create a proper Xcode project with a target
 echo "Creating Xcode project with target..."
 
-# Create a temporary directory for the project
+# Create a temporary directory for the project and clean it if it exists
 TEMP_DIR="PrivateHomeAIRunner"
+rm -rf "$TEMP_DIR"
 mkdir -p "$TEMP_DIR/Sources/PrivateHomeAIRunner"
-mkdir -p "$TEMP_DIR/Resources"
+mkdir -p "$TEMP_DIR/Sources/PrivateHomeAIRunner/Resources"
 
 # Create the Swift files
 cat > "$TEMP_DIR/Sources/PrivateHomeAIRunner/PrivateHomeAIRunnerApp.swift" << EOF
@@ -44,7 +45,7 @@ struct PrivateHomeAIRunnerApp: App {
 EOF
 
 # Create Info.plist with hardcoded values instead of Xcode variables
-cat > "$TEMP_DIR/Resources/Info.plist" << EOF
+cat > "$TEMP_DIR/Sources/PrivateHomeAIRunner/Resources/Info.plist" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -99,7 +100,8 @@ import PackageDescription
 let package = Package(
     name: "PrivateHomeAIRunner",
     platforms: [
-        .iOS(.v15)
+        .iOS(.v15),
+        .macOS(.v12)
     ],
     dependencies: [
         .package(path: "../"),

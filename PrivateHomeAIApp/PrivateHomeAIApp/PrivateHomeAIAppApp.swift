@@ -3,6 +3,7 @@ import PrivateHomeAI
 
 @main
 struct PrivateHomeAIAppApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var appState = AppState()
     
     var body: some Scene {
@@ -12,6 +13,11 @@ struct PrivateHomeAIAppApp: App {
                 .onAppear {
                     // Check for jailbreak
                     if JailbreakDetectionService.shared.isJailbroken() {
+                        LoggingService.shared.log(
+                            category: .security,
+                            level: .critical,
+                            message: "Jailbreak detected! App will exit."
+                        )
                         appState.showJailbreakAlert = true
                     }
                 }

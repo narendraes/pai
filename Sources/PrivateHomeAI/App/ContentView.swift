@@ -1,21 +1,36 @@
 import SwiftUI
 
-struct ContentView: View {
-    @EnvironmentObject private var appState: AppState
+/// The main content view for the Private Home AI app
+public struct ContentView: View {
+    @EnvironmentObject var appState: AppState
     
-    var body: some View {
-        Group {
+    public init() {}
+    
+    public var body: some View {
+        ZStack {
             if appState.isAuthenticated {
                 MainTabView()
             } else {
-                AuthenticationView()
+                LoginView()
             }
+        }
+        .overlay(
+            ConnectionStatusView()
+                .padding()
+                .background(Color.black.opacity(0.7))
+                .cornerRadius(10)
+                .padding(),
+            alignment: .top
+        )
+        .onAppear {
+            LoggingService.shared.log(category: .ui, level: .info, message: "ContentView appeared")
         }
     }
 }
 
+/// The main tab view for the app
 struct MainTabView: View {
-    @EnvironmentObject private var appState: AppState
+    @EnvironmentObject var appState: AppState
     
     var body: some View {
         TabView(selection: $appState.selectedTab) {
@@ -29,7 +44,7 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Cameras", systemImage: "video.fill")
                 }
-                .tag(AppState.TabSelection.cameras)
+                .tag(AppState.TabSelection.camera)
             
             AnalysisView()
                 .tabItem {
@@ -43,71 +58,77 @@ struct MainTabView: View {
                 }
                 .tag(AppState.TabSelection.settings)
         }
-        .overlay(
-            ConnectionStatusView()
-                .padding(.top, 4)
-            , alignment: .top
-        )
+        .onAppear {
+            LoggingService.shared.log(category: .ui, level: .info, message: "MainTabView appeared")
+        }
     }
 }
 
+/// A view that displays the current connection status
 struct ConnectionStatusView: View {
-    @EnvironmentObject private var appState: AppState
-    
-    var isConnected: Bool {
-        if case .connected = appState.connectionStatus {
-            return true
-        }
-        return false
-    }
-    
-    var isDisconnected: Bool {
-        if case .disconnected = appState.connectionStatus {
-            return true
-        }
-        return false
-    }
+    @EnvironmentObject var appState: AppState
+    @State private var isConnecting = false
     
     var body: some View {
-        if !isConnected {
-            HStack {
-                Image(systemName: appState.connectionStatus.iconName)
-                    .foregroundColor(appState.connectionStatus.color)
-                
-                Text(appState.connectionStatus.description)
-                    .font(.caption)
-                    .foregroundColor(appState.connectionStatus.color)
-                
-                if isDisconnected {
-                    Button("Connect") {
-                        connectToServer()
+        HStack {
+            Image(systemName: appState.connectionStatus.iconName)
+                .foregroundColor(appState.connectionStatus.color)
+            
+            Text(appState.connectionStatus.description)
+                .foregroundColor(.white)
+            
+            Spacer()
+            
+            if appState.connectionStatus == .disconnected {
+                Button(action: connect) {
+                    if isConnecting {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    } else {
+                        Text("Connect")
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Color.blue)
+                            .cornerRadius(5)
                     }
-                    .font(.caption)
-                    .buttonStyle(.bordered)
                 }
+                .disabled(isConnecting)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 4)
-            .background(Color(UIColor.systemBackground).opacity(0.8))
-            .cornerRadius(12)
-            .shadow(radius: 2)
+        }
+        .padding(.horizontal)
+        .onAppear {
+            LoggingService.shared.log(category: .ui, level: .info, message: "ConnectionStatusView appeared")
         }
     }
     
-    private func connectToServer() {
-        appState.connectionStatus = .connecting
+    /// Connect to the server
+    private func connect() {
+        LoggingService.shared.log(category: .network, level: .info, message: "Connection attempt initiated")
+        
+        isConnecting = true
         
         // Simulate connection process
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            appState.connectionStatus = .connected
-            appState.isConnected = true
+            appState.connectionStatus = .connecting
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                // Simulate successful connection
+                appState.connectionStatus = .connected
+                appState.isConnected = true
+                isConnecting = false
+                
+                LoggingService.shared.log(category: .network, level: .info, message: "Connection successful")
+            }
         }
     }
 }
 
+#if DEBUG
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
             .environmentObject(AppState())
     }
-} 
+}
+#endif 

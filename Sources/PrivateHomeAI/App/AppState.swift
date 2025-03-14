@@ -24,56 +24,6 @@ public class AppState: ObservableObject {
         LoggingService.shared.log(category: .startup, level: .info, message: "AppState initialized")
     }
     
-    /// Connection status for the app
-    public enum ConnectionStatus: Equatable {
-        case disconnected
-        case connecting
-        case connected
-        case error(String)
-        
-        /// A description of the connection status
-        public var description: String {
-            switch self {
-            case .disconnected:
-                return "Disconnected"
-            case .connecting:
-                return "Connecting..."
-            case .connected:
-                return "Connected"
-            case .error(let message):
-                return "Error: \(message)"
-            }
-        }
-        
-        /// The icon name for the connection status
-        public var iconName: String {
-            switch self {
-            case .disconnected:
-                return "wifi.slash"
-            case .connecting:
-                return "wifi.exclamationmark"
-            case .connected:
-                return "wifi"
-            case .error:
-                return "exclamationmark.triangle"
-            }
-        }
-        
-        /// The color for the connection status
-        public var color: Color {
-            switch self {
-            case .disconnected:
-                return .red
-            case .connecting:
-                return .yellow
-            case .connected:
-                return .green
-            case .error:
-                return .red
-            }
-        }
-    }
-    
     /// Tab selection for the app
     public enum TabSelection: Hashable {
         case chat

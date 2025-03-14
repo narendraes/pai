@@ -1,14 +1,14 @@
 import SwiftUI
 
 /// Represents the current connection status to the server
-enum ConnectionStatus {
+public enum ConnectionStatus: Equatable {
     case connecting
     case connected
     case disconnected
     case error(String)
     
     /// Human-readable description of the connection status
-    var description: String {
+    public var description: String {
         switch self {
         case .connecting:
             return "Connecting..."
@@ -22,7 +22,7 @@ enum ConnectionStatus {
     }
     
     /// Icon name for the connection status
-    var iconName: String {
+    public var iconName: String {
         switch self {
         case .connecting:
             return "arrow.clockwise"
@@ -36,16 +36,28 @@ enum ConnectionStatus {
     }
     
     /// Color representing the connection status
-    var color: Color {
+    public var color: Color {
         switch self {
         case .connecting:
             return .yellow
         case .connected:
             return .green
         case .disconnected:
-            return .gray
+            return .red
         case .error:
             return .red
+        }
+    }
+    
+    /// Implement Equatable for ConnectionStatus
+    public static func == (lhs: ConnectionStatus, rhs: ConnectionStatus) -> Bool {
+        switch (lhs, rhs) {
+        case (.connecting, .connecting), (.connected, .connected), (.disconnected, .disconnected):
+            return true
+        case (.error(let lhsMessage), .error(let rhsMessage)):
+            return lhsMessage == rhsMessage
+        default:
+            return false
         }
     }
 } 

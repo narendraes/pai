@@ -28,42 +28,6 @@ public struct ContentView: View {
     }
 }
 
-/// The main tab view for the app
-struct MainTabView: View {
-    @EnvironmentObject var appState: AppState
-    
-    var body: some View {
-        TabView(selection: $appState.selectedTab) {
-            ChatView()
-                .tabItem {
-                    Label("Chat", systemImage: "message.fill")
-                }
-                .tag(AppState.TabSelection.chat)
-            
-            CameraView()
-                .tabItem {
-                    Label("Cameras", systemImage: "video.fill")
-                }
-                .tag(AppState.TabSelection.camera)
-            
-            AnalysisView()
-                .tabItem {
-                    Label("Analysis", systemImage: "magnifyingglass")
-                }
-                .tag(AppState.TabSelection.analysis)
-            
-            SettingsView()
-                .tabItem {
-                    Label("Settings", systemImage: "gear")
-                }
-                .tag(AppState.TabSelection.settings)
-        }
-        .onAppear {
-            LoggingService.shared.log(category: .ui, level: .info, message: "MainTabView appeared")
-        }
-    }
-}
-
 /// A view that displays the current connection status
 struct ConnectionStatusView: View {
     @EnvironmentObject var appState: AppState

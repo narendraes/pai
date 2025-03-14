@@ -9,10 +9,11 @@ echo "Creating Xcode project with target..."
 
 # Create a temporary directory for the project
 TEMP_DIR="PrivateHomeAIRunner"
-mkdir -p "$TEMP_DIR"
+mkdir -p "$TEMP_DIR/Sources/PrivateHomeAIRunner"
+mkdir -p "$TEMP_DIR/Resources"
 
 # Create the Swift files
-cat > "$TEMP_DIR/PrivateHomeAIRunnerApp.swift" << EOF
+cat > "$TEMP_DIR/Sources/PrivateHomeAIRunner/PrivateHomeAIRunnerApp.swift" << EOF
 import SwiftUI
 import PrivateHomeAI
 
@@ -43,7 +44,7 @@ struct PrivateHomeAIRunnerApp: App {
 EOF
 
 # Create Info.plist with hardcoded values instead of Xcode variables
-cat > "$TEMP_DIR/Info.plist" << EOF
+cat > "$TEMP_DIR/Resources/Info.plist" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -109,9 +110,8 @@ let package = Package(
             dependencies: [
                 .product(name: "PrivateHomeAI", package: "pai")
             ],
-            path: ".",
             resources: [
-                .process("Info.plist")
+                .process("Resources")
             ]
         ),
     ]

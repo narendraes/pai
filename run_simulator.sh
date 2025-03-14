@@ -42,24 +42,24 @@ struct PrivateHomeAIRunnerApp: App {
 }
 EOF
 
-# Create Info.plist
+# Create Info.plist with hardcoded values instead of Xcode variables
 cat > "$TEMP_DIR/Info.plist" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<string>en</string>
 	<key>CFBundleExecutable</key>
-	<string>$(EXECUTABLE_NAME)</string>
+	<string>PrivateHomeAIRunner</string>
 	<key>CFBundleIdentifier</key>
-	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<string>com.privateai.home.runner</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>$(PRODUCT_NAME)</string>
+	<string>PrivateHomeAIRunner</string>
 	<key>CFBundlePackageType</key>
-	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
@@ -107,7 +107,7 @@ let package = Package(
         .executableTarget(
             name: "PrivateHomeAIRunner",
             dependencies: [
-                .product(name: "PrivateHomeAI", package: "PrivateHomeAI")
+                .product(name: "PrivateHomeAI", package: "pai")
             ],
             path: ".",
             resources: [
@@ -152,6 +152,6 @@ xcrun simctl install "$SIMULATOR_ID" "$TEMP_DIR/.build/debug/PrivateHomeAIRunner
 
 # Launch the app
 echo "Launching app on simulator..."
-xcrun simctl launch "$SIMULATOR_ID" "PrivateHomeAIRunner"
+xcrun simctl launch "$SIMULATOR_ID" "com.privateai.home.runner"
 
 echo "Done! The Private Home AI app should now be running in the simulator." 

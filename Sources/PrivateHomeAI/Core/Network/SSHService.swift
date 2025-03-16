@@ -2,12 +2,15 @@ import Foundation
 import Combine
 
 /// Service for managing SSH connections to the home server
-class SSHService: ObservableObject {
+public class SSHService: ObservableObject {
     /// Shared instance
-    static let shared = SSHService()
+    public static let shared = SSHService()
     
     /// Current connection status
-    @Published var connectionStatus: ConnectionStatus = .disconnected
+    @Published public private(set) var connectionStatus: ConnectionStatus = .disconnected
+    
+    /// Last error message
+    @Published public private(set) var lastError: String?
     
     /// Connection timeout in seconds
     private let connectionTimeout: TimeInterval = 10.0
@@ -27,47 +30,21 @@ class SSHService: ObservableObject {
     /// Connect to SSH server
     /// - Parameters:
     ///   - host: Server hostname or IP address
-    ///   - port: Server port
     ///   - username: Username for authentication
     ///   - password: Password for authentication
-    ///   - completion: Callback with connection result
-    func connect(host: String, port: Int, username: String, password: String, completion: @escaping (Result<Void, Error>) -> Void) {
-        // Reset retry count
-        currentRetryCount = 0
-        
-        // Update status
+    public func connect(host: String, username: String, password: String) {
         connectionStatus = .connecting
         
-        // Start connection timer
-        startConnectionTimer()
-        
-        // Simulate connection process
-        DispatchQueue.global().async {
-            // Simulate network delay
-            Thread.sleep(forTimeInterval: 2.0)
-            
-            // Simulate connection success (90% chance)
-            let success = Double.random(in: 0...1) > 0.1
-            
-            DispatchQueue.main.async {
-                // Stop timer
-                self.stopConnectionTimer()
-                
-                if success {
-                    // Connection successful
-                    self.connectionStatus = .connected
-                    completion(.success(()))
-                } else {
-                    // Connection failed
-                    self.handleConnectionFailure(host: host, port: port, username: username, password: password, completion: completion)
-                }
-            }
+        // TODO: Implement actual SSH connection logic
+        // For now, simulate connection
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+            self?.connectionStatus = .connected
         }
     }
     
     /// Disconnect from SSH server
-    func disconnect() {
-        // Update status
+    public func disconnect() {
+        // TODO: Implement actual SSH disconnection logic
         connectionStatus = .disconnected
         
         // Stop timer
@@ -77,36 +54,12 @@ class SSHService: ObservableObject {
     /// Execute command on SSH server
     /// - Parameters:
     ///   - command: Command to execute
-    ///   - completion: Callback with command result
-    func executeCommand(_ command: String, completion: @escaping (Result<String, Error>) -> Void) {
-        // Check if connected
-        guard connectionStatus == .connected else {
-            completion(.failure(NetworkError.notConnected))
-            return
-        }
-        
-        // Simulate command execution
-        DispatchQueue.global().async {
-            // Simulate network delay
-            Thread.sleep(forTimeInterval: 0.5)
-            
-            // Simulate command output
-            let output: String
-            
-            if command.contains("ls") {
-                output = "file1.txt\nfile2.txt\nconfig.json\ndata.db"
-            } else if command.contains("cat") {
-                output = "Content of the requested file."
-            } else if command.contains("ps") {
-                output = "PID TTY          TIME CMD\n1234 ?        00:00:01 homeai\n2345 ?        00:00:00 nginx\n3456 ?        00:00:02 python"
-            } else {
-                output = "Command executed successfully."
-            }
-            
-            DispatchQueue.main.async {
-                completion(.success(output))
-            }
-        }
+    /// - Returns: Publisher with command result
+    public func executeCommand(_ command: String) -> AnyPublisher<String, Error> {
+        // TODO: Implement actual SSH command execution
+        return Just("Command executed: \(command)")
+            .setFailureType(to: Error.self)
+            .eraseToAnyPublisher()
     }
     
     /// Upload file to SSH server
@@ -183,7 +136,7 @@ class SSHService: ObservableObject {
             
             // Retry connection after delay
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                self.connect(host: host, port: port, username: username, password: password, completion: completion)
+                self.connect(host: host, username: username, password: password)
             }
         } else {
             // Max retries reached, fail

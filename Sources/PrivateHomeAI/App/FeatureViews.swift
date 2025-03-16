@@ -1,9 +1,5 @@
 import SwiftUI
 
-// Import app types
-@_exported import struct PrivateHomeAI.AppState
-@_exported import enum PrivateHomeAI.ConnectionStatus
-
 public struct ChatView: View {
     @EnvironmentObject var appState: AppState
     

@@ -18,7 +18,7 @@ public struct ContentView: View {
             
             CameraView()
                 .tabItem {
-                    Label("Camera", systemImage: "video.fill")
+                    Label("Camera", systemImage: "camera.fill")
                 }
                 .tag(AppState.TabSelection.camera)
             
@@ -34,10 +34,13 @@ public struct ContentView: View {
                 }
                 .tag(AppState.TabSelection.settings)
         }
-        .onAppear {
-            print("DEBUG: ContentView appeared")
-        }
+        .accentColor(.blue)
     }
+}
+
+#Preview {
+    ContentView()
+        .environmentObject(AppState())
 }
 
 #if DEBUG

@@ -20,17 +20,8 @@ public class AppState: ObservableObject {
     @Published public var showJailbreakAlert: Bool = false
     
     /// Initialize a new app state
-    public init(
-        sshConnectionService: SSHConnectionServiceProtocol? = nil,
-        jailbreakDetectionService: JailbreakDetectionServiceProtocol? = nil
-    ) {
-        self.sshConnectionService = sshConnectionService ?? DependencyContainer.shared.sshConnectionService
-        self.jailbreakDetectionService = jailbreakDetectionService ?? DependencyContainer.shared.jailbreakDetectionService
-        
-        LoggingService.shared.log(category: .startup, level: .info, message: "AppState initialized")
-        
-        setupObservers()
-        checkJailbreak()
+    public init() {
+        setupServices()
     }
     
     /// Tab selection for the app
@@ -41,52 +32,36 @@ public class AppState: ObservableObject {
         case settings
     }
     
-    // App settings
-    @Published var settings = AppSettings()
-    
-    // Services
-    private let sshConnectionService: SSHConnectionServiceProtocol
-    private let jailbreakDetectionService: JailbreakDetectionServiceProtocol
-    
-    // Cancellables
+    // MARK: - Private Properties
     private var cancellables = Set<AnyCancellable>()
     
-    private func setupObservers() {
+    // MARK: - Private Methods
+    private func setupServices() {
         // Observe SSH connection status
-        sshConnectionService.connectionStatus
+        SSHService.shared.$connectionStatus
             .receive(on: DispatchQueue.main)
             .sink { [weak self] status in
                 self?.connectionStatus = status
-                
-                switch status {
-                case .connected:
-                    self?.isConnected = true
-                case .disconnected, .error:
-                    self?.isConnected = false
-                case .connecting:
-                    // Keep current connection state
-                    break
-                }
+                self?.isConnected = status == .connected
             }
             .store(in: &cancellables)
     }
-    
-    private func checkJailbreak() {
-        if jailbreakDetectionService.isJailbroken() {
-            // In a real app, you might want to take more drastic action
-            // For now, we'll just log it
-            print("WARNING: Jailbreak detected!")
-        }
-    }
 }
 
-struct AppSettings {
-    var useDarkMode = true
-    var enableNotifications = true
-    var defaultCameraId: String?
-    var recordingQuality: RecordingQuality = .high
-    
-    enum RecordingQuality {
-        case low, medium, high
+// MARK: - App Settings
+extension AppState {
+    public struct AppSettings {
+        public var useDarkMode = true
+        public var enableNotifications = true
+        public var defaultCameraId: String?
+        
+        public enum RecordingQuality {
+            case low, medium, high
+        }
+        public var recordingQuality: RecordingQuality = .high
+        
+        public init() {}
     }
+    
+    @Published public var settings = AppSettings()
 } 

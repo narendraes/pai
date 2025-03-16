@@ -1,23 +1,19 @@
+import Foundation
 import SwiftUI
 
-/// Represents the current connection status to the server
-public enum ConnectionStatus: Equatable {
-    case connecting
+/// Represents the current connection status
+public enum ConnectionStatus: CustomStringConvertible, Equatable {
     case connected
     case disconnected
+    case connecting
     case error(String)
     
-    /// Human-readable description of the connection status
     public var description: String {
         switch self {
-        case .connecting:
-            return "Connecting..."
-        case .connected:
-            return "Connected"
-        case .disconnected:
-            return "Disconnected"
-        case .error(let message):
-            return "Error: \(message)"
+        case .connected: return "Connected"
+        case .disconnected: return "Disconnected"
+        case .connecting: return "Connecting"
+        case .error(let message): return "Error: \(message)"
         }
     }
     

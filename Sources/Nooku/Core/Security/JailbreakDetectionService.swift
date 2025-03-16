@@ -1,43 +1,52 @@
 import Foundation
 import UIKit
 
+/// Protocol defining jailbreak detection functionality
+public protocol JailbreakDetectionServiceProtocol {
+    /// Check if the device is jailbroken
+    func isJailbroken() -> Bool
+}
+
 /// Service for detecting jailbroken devices
-class JailbreakDetectionService: JailbreakDetectionServiceProtocol {
+public class JailbreakDetectionService: JailbreakDetectionServiceProtocol {
     /// Shared instance for singleton access
-    static let shared = JailbreakDetectionService()
+    public static let shared = JailbreakDetectionService()
     
     /// Private initializer for singleton pattern
-    internal init() {}
+    private init() {}
     
     /// Check if the device is jailbroken
     /// - Returns: True if the device is jailbroken, false otherwise
-    func isJailbroken() -> Bool {
+    public func isJailbroken() -> Bool {
         #if targetEnvironment(simulator)
         // Simulator is never jailbroken
         return false
         #else
         // Check for common jailbreak files
-        if fileExists(paths: jailbreakPaths) {
-            return true
+        let jailbreakPaths = [
+            "/Applications/Cydia.app",
+            "/Library/MobileSubstrate/MobileSubstrate.dylib",
+            "/bin/bash",
+            "/usr/sbin/sshd",
+            "/etc/apt",
+            "/private/var/lib/apt/"
+        ]
+        
+        for path in jailbreakPaths {
+            if FileManager.default.fileExists(atPath: path) {
+                return true
+            }
         }
         
-        // Check for suspicious app installation
-        if canOpenSuspiciousURLSchemes() {
+        // Check if we can write to private directories
+        let path = "/private/jailbreak.txt"
+        do {
+            try "test".write(toFile: path, atomically: true, encoding: .utf8)
+            try FileManager.default.removeItem(atPath: path)
             return true
+        } catch {
+            return false
         }
-        
-        // Check for write permission outside of app sandbox
-        if canWriteOutsideSandbox() {
-            return true
-        }
-        
-        // Check for suspicious environment variables
-        if hasSuspiciousEnvironmentVariables() {
-            return true
-        }
-        
-        // Device is not jailbroken
-        return false
         #endif
     }
     

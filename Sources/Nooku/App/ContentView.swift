@@ -1,6 +1,8 @@
 import SwiftUI
 
-/// The main content view for the Nooku app
+@_exported import struct Nooku.AppState
+
+/// The main content view for the app
 public struct ContentView: View {
     @EnvironmentObject var appState: AppState
     
@@ -9,40 +11,38 @@ public struct ContentView: View {
     }
     
     public var body: some View {
-        print("DEBUG: ContentView rendering basic content...")
-        
-        // Ultra simplified version with no dependencies
-        return VStack {
-            Text("Nooku")
-                .font(.largeTitle)
-                .padding()
+        TabView(selection: $appState.selectedTab) {
+            ChatView()
+                .tabItem {
+                    Label("Chat", systemImage: "message.fill")
+                }
+                .tag(AppState.TabSelection.chat)
             
-            Image(systemName: "house.fill")
-                .resizable()
-                .frame(width: 100, height: 100)
-                .foregroundColor(.blue)
-                .padding()
+            CameraView()
+                .tabItem {
+                    Label("Camera", systemImage: "camera.fill")
+                }
+                .tag(AppState.TabSelection.camera)
             
-            Text("A secure home automation solution")
-                .font(.headline)
-                .padding()
+            AnalysisView()
+                .tabItem {
+                    Label("Analysis", systemImage: "chart.bar.fill")
+                }
+                .tag(AppState.TabSelection.analysis)
             
-            Text("Connection Status: \(appState.connectionStatus.description)")
-                .padding()
-            
-            Button("Connect") {
-                print("DEBUG: Connect button tapped")
-            }
-            .padding()
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .cornerRadius(10)
+            SettingsView()
+                .tabItem {
+                    Label("Settings", systemImage: "gear")
+                }
+                .tag(AppState.TabSelection.settings)
         }
-        .padding()
-        .onAppear {
-            print("DEBUG: Basic ContentView appeared")
-        }
+        .accentColor(.blue)
     }
+}
+
+#Preview {
+    ContentView()
+        .environmentObject(AppState())
 }
 
 #if DEBUG

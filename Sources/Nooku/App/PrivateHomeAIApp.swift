@@ -4,6 +4,9 @@ import Security
 import LocalAuthentication
 import UIKit
 
+@_exported import struct Nooku.AppState
+@_exported import class Nooku.JailbreakDetectionService
+
 @main
 public struct PrivateHomeAIApp: App {
     @StateObject private var appState = AppState()

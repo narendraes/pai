@@ -44,7 +44,7 @@ public class AppDelegate: NSObject, UIApplicationDelegate {
     private func checkForDuplicateFiles() {
         // Known duplicate files
         let knownDuplicates = [
-            ("AuthenticationView.swift", "/Sources/Nooku/App/AuthenticationView.swift", "/Sources/Nooku/Features/Authentication/AuthenticationView.swift")
+            ("AuthenticationView.swift", "/Sources/PrivateHomeAI/App/AuthenticationView.swift", "/Sources/PrivateHomeAI/Features/Authentication/AuthenticationView.swift")
         ]
         
         for (fileName, path1, path2) in knownDuplicates {

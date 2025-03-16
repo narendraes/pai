@@ -69,7 +69,7 @@ public class LoggingService {
         
         // Set up log file in Documents directory
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        logFileURL = documentsDirectory.appendingPathComponent("Nooku.log")
+        logFileURL = documentsDirectory.appendingPathComponent("PrivateHomeAI.log")
         
         // Create log file if it doesn't exist
         if !FileManager.default.fileExists(atPath: logFileURL.path) {

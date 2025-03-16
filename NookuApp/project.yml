@@ -3,7 +3,6 @@ options:
   bundleIdPrefix: com.nooku
   deploymentTarget:
     iOS: 15.0
-    macOS: 12.0
 packages:
   Nooku:
     path: ..
@@ -26,4 +25,5 @@ targets:
         SUPPORTS_MACCATALYST: NO
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
     dependencies:
-      - package: Nooku 
+      - package: Nooku
+        product: Nooku 

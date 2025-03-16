@@ -24,8 +24,7 @@ let package = Package(
                 "CryptoSwift", 
                 "Alamofire",
                 .product(name: "SSHClient", package: "swift-ssh-client")
-            ],
-            path: "Sources/Nooku"
+            ]
         ),
         .testTarget(
             name: "NookuTests",

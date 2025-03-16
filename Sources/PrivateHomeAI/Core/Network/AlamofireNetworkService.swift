@@ -50,7 +50,7 @@ class AlamofireNetworkService: NetworkService {
                 case 500...599:
                     throw NetworkError.serverError(httpResponse.statusCode)
                 default:
-                    throw NetworkError.unknown(AFError.responseValidationFailed(reason: .unacceptableStatusCode(code: httpResponse.statusCode)))
+                    throw NetworkError.requestFailed(AFError.responseValidationFailed(reason: .unacceptableStatusCode(code: httpResponse.statusCode)))
                 }
                 
                 guard let data = response.data else {
@@ -66,7 +66,7 @@ class AlamofireNetworkService: NetworkService {
                 } else if let decodingError = error as? DecodingError {
                     return NetworkError.decodingFailed(decodingError)
                 } else {
-                    return NetworkError.unknown(error)
+                    return NetworkError.requestFailed(error)
                 }
             }
             .eraseToAnyPublisher()
@@ -81,7 +81,21 @@ class AlamofireNetworkService: NetworkService {
             return Fail(error: NetworkError.invalidURL).eraseToAnyPublisher()
         }
         
-        return session.upload(data, to: url, method: HTTPMethod(rawValue: endpoint.method.rawValue))
+        let httpMethod: Alamofire.HTTPMethod
+        switch endpoint.method {
+        case .get:
+            httpMethod = .get
+        case .post:
+            httpMethod = .post
+        case .put:
+            httpMethod = .put
+        case .delete:
+            httpMethod = .delete
+        case .patch:
+            httpMethod = .patch
+        }
+        
+        return session.upload(data, to: url, method: httpMethod)
             .validate()
             .publishData()
             .tryMap { response in
@@ -99,7 +113,7 @@ class AlamofireNetworkService: NetworkService {
                 case 500...599:
                     throw NetworkError.serverError(httpResponse.statusCode)
                 default:
-                    throw NetworkError.unknown(AFError.responseValidationFailed(reason: .unacceptableStatusCode(code: httpResponse.statusCode)))
+                    throw NetworkError.requestFailed(AFError.responseValidationFailed(reason: .unacceptableStatusCode(code: httpResponse.statusCode)))
                 }
                 
                 guard let data = response.data else {
@@ -115,7 +129,7 @@ class AlamofireNetworkService: NetworkService {
                 } else if let decodingError = error as? DecodingError {
                     return NetworkError.decodingFailed(decodingError)
                 } else {
-                    return NetworkError.unknown(error)
+                    return NetworkError.requestFailed(error)
                 }
             }
             .eraseToAnyPublisher()
@@ -159,7 +173,7 @@ class AlamofireNetworkService: NetworkService {
                 case 500...599:
                     throw NetworkError.serverError(httpResponse.statusCode)
                 default:
-                    throw NetworkError.unknown(AFError.responseValidationFailed(reason: .unacceptableStatusCode(code: httpResponse.statusCode)))
+                    throw NetworkError.requestFailed(AFError.responseValidationFailed(reason: .unacceptableStatusCode(code: httpResponse.statusCode)))
                 }
                 
                 guard let data = response.data else {
@@ -172,7 +186,7 @@ class AlamofireNetworkService: NetworkService {
                 if let networkError = error as? NetworkError {
                     return networkError
                 } else {
-                    return NetworkError.unknown(error)
+                    return NetworkError.requestFailed(error)
                 }
             }
             .eraseToAnyPublisher()

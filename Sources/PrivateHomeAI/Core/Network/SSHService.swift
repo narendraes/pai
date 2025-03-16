@@ -111,10 +111,10 @@ class SSHService: ObservableObject {
     
     /// Upload file to SSH server
     /// - Parameters:
-    ///   - localURL: Local file URL
+    ///   - localPath: Local file path
     ///   - remotePath: Remote file path
-    ///   - completion: Callback with upload result
-    func uploadFile(localURL: URL, remotePath: String, completion: @escaping (Result<Void, Error>) -> Void) {
+    ///   - completion: Completion handler
+    func uploadFile(localPath: String, remotePath: String, completion: @escaping (Result<Void, Error>) -> Void) {
         // Check if connected
         guard connectionStatus == .connected else {
             completion(.failure(NetworkError.notConnected))
@@ -124,16 +124,16 @@ class SSHService: ObservableObject {
         // Simulate file upload
         DispatchQueue.global().async {
             // Simulate network delay
-            Thread.sleep(forTimeInterval: 2.0)
+            Thread.sleep(forTimeInterval: Double.random(in: 0.5...1.5))
             
-            // Simulate upload success (95% chance)
+            // Simulate success/failure
             let success = Double.random(in: 0...1) > 0.05
             
             DispatchQueue.main.async {
                 if success {
                     completion(.success(()))
                 } else {
-                    completion(.failure(NetworkError.uploadFailed))
+                    completion(.failure(NetworkError.fileTransferFailed))
                 }
             }
         }
@@ -142,9 +142,9 @@ class SSHService: ObservableObject {
     /// Download file from SSH server
     /// - Parameters:
     ///   - remotePath: Remote file path
-    ///   - localURL: Local file URL
-    ///   - completion: Callback with download result
-    func downloadFile(remotePath: String, localURL: URL, completion: @escaping (Result<Void, Error>) -> Void) {
+    ///   - localPath: Local file path
+    ///   - completion: Completion handler
+    func downloadFile(remotePath: String, localPath: String, completion: @escaping (Result<Void, Error>) -> Void) {
         // Check if connected
         guard connectionStatus == .connected else {
             completion(.failure(NetworkError.notConnected))
@@ -154,16 +154,16 @@ class SSHService: ObservableObject {
         // Simulate file download
         DispatchQueue.global().async {
             // Simulate network delay
-            Thread.sleep(forTimeInterval: 1.5)
+            Thread.sleep(forTimeInterval: Double.random(in: 0.5...1.5))
             
-            // Simulate download success (95% chance)
+            // Simulate success/failure
             let success = Double.random(in: 0...1) > 0.05
             
             DispatchQueue.main.async {
                 if success {
                     completion(.success(()))
                 } else {
-                    completion(.failure(NetworkError.downloadFailed))
+                    completion(.failure(NetworkError.fileTransferFailed))
                 }
             }
         }
@@ -179,7 +179,7 @@ class SSHService: ObservableObject {
             currentRetryCount += 1
             
             // Update status
-            connectionStatus = .reconnecting
+            connectionStatus = .connecting
             
             // Retry connection after delay
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -187,7 +187,7 @@ class SSHService: ObservableObject {
             }
         } else {
             // Max retries reached, fail
-            connectionStatus = .failed
+            connectionStatus = .error("Connection failed after \(maxRetryCount) attempts")
             completion(.failure(NetworkError.connectionFailed))
         }
     }
@@ -202,8 +202,8 @@ class SSHService: ObservableObject {
             guard let self = self else { return }
             
             // Connection timed out
-            if self.connectionStatus == .connecting || self.connectionStatus == .reconnecting {
-                self.connectionStatus = .failed
+            if self.connectionStatus == .connecting {
+                self.connectionStatus = .error("Connection timed out")
                 self.stopConnectionTimer()
             }
         }

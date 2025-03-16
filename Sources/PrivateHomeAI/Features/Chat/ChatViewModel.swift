@@ -59,9 +59,9 @@ class ChatViewModel: ObservableObject {
                     // Add AI response
                     self?.messages.append(
                         ChatMessage(
-                            content: response.response,
+                            content: response,
                             isFromUser: false,
-                            model: response.model
+                            model: self?.selectedModel
                         )
                     )
                     self?.isLoading = false
@@ -76,10 +76,10 @@ class ChatViewModel: ObservableObject {
             .sink(
                 receiveCompletion: { _ in },
                 receiveValue: { [weak self] response in
-                    self?.availableModels = response.models.map { $0.name }
+                    self?.availableModels = response.map { $0.name }
                     
                     // Set default model if available
-                    if let firstModel = response.models.first?.name, 
+                    if let firstModel = response.first?.name, 
                        !(self?.availableModels.contains(self?.selectedModel ?? "") ?? false) {
                         self?.selectedModel = firstModel
                     }

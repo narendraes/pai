@@ -1,6 +1,24 @@
 import SwiftUI
 import SVGKit
 
+/// Error types that can occur when working with SVG images
+public enum SVGError: Error, LocalizedError {
+    case fileNotFound(String)
+    case loadingFailed(String)
+    case renderingFailed(String)
+    
+    public var errorDescription: String? {
+        switch self {
+        case .fileNotFound(let name):
+            return "Could not find SVG file: \(name)"
+        case .loadingFailed(let name):
+            return "Failed to load SVG file: \(name)"
+        case .renderingFailed(let name):
+            return "Failed to render SVG: \(name)"
+        }
+    }
+}
+
 /// A SwiftUI view that renders SVG images using SVGKit
 public struct SVGImageView: UIViewRepresentable {
     /// The name of the SVG file (without extension)
@@ -12,47 +30,82 @@ public struct SVGImageView: UIViewRepresentable {
     /// The tint color to apply to the SVG (if applicable)
     private let tintColor: UIColor?
     
+    /// Optional placeholder to show when SVG fails to load
+    private let placeholderImage: UIImage?
+    
+    /// View model that handles SVG loading and caching
+    @ObservedObject private var viewModel: SVGImageViewModel
+    
     /// Creates a new SVGImageView
     /// - Parameters:
     ///   - svgName: The name of the SVG file (without extension)
     ///   - size: Optional size to render the SVG image
     ///   - tintColor: Optional tint color to apply to the SVG
-    public init(svgName: String, size: CGSize? = nil, tintColor: Color? = nil) {
+    ///   - placeholderImage: Optional image to display if SVG loading fails
+    public init(svgName: String, 
+                size: CGSize? = nil, 
+                tintColor: Color? = nil,
+                placeholderImage: UIImage? = nil) {
         self.svgName = svgName
         self.size = size
         self.tintColor = tintColor.map { UIColor($0) }
+        self.placeholderImage = placeholderImage
+        self.viewModel = SVGImageViewModel(svgName: svgName)
     }
     
     public func makeUIView(context: Context) -> SVGKFastImageView {
-        // First try to load from the SVGs directory
-        var svgURL: URL?
+        // Create the image view
+        let imageView: SVGKFastImageView
         
-        // Try to find the SVG in the SVGs directory
-        if let url = Bundle.main.url(forResource: "SVGs/\(svgName)", withExtension: "svg") {
-            svgURL = url
-        } 
-        // Fallback to looking in the main bundle
-        else if let url = Bundle.main.url(forResource: svgName, withExtension: "svg") {
-            svgURL = url
-        }
-        
-        guard let svgURL = svgURL else {
-            print("Error: Could not find SVG file named \(svgName).svg")
-            // Return an empty view if the SVG file is not found
-            return SVGKFastImageView()
-        }
-        
-        let svgImage = SVGKImage(contentsOf: svgURL)
-        let imageView = SVGKFastImageView(svgkImage: svgImage!)
-        
-        // Apply size if provided
-        if let size = size {
-            imageView.frame = CGRect(origin: .zero, size: size)
-        }
-        
-        // Apply tint color if provided
-        if let tintColor = tintColor {
-            imageView.tintColor = tintColor
+        do {
+            // Try to load the SVG using the view model
+            let svgImage = try viewModel.loadSVG()
+            
+            // Create a view with the loaded image
+            guard let view = SVGKFastImageView(svgkImage: svgImage) else {
+                // If view creation fails, throw an error
+                throw SVGError.renderingFailed(svgName)
+            }
+            
+            imageView = view
+            
+            // Configure the image view
+            if let size = size {
+                imageView.bounds = CGRect(origin: .zero, size: size)
+            }
+            
+            if let tintColor = tintColor {
+                imageView.tintColor = tintColor
+            }
+            
+            // Log successful load for debugging
+            #if DEBUG
+            print("Successfully loaded SVG: \(svgName)")
+            #endif
+            
+        } catch {
+            // Handle error by creating a fallback view
+            #if DEBUG
+            print("SVG loading error: \(error.localizedDescription)")
+            #endif
+            
+            if let placeholderImage = placeholderImage {
+                // Create an empty SVGKImage from the placeholder UIImage
+                let emptyView = SVGKFastImageView(frame: size.map { CGRect(origin: .zero, size: $0) } ?? .zero)
+                // We can't directly set the image property with a UIImage
+                // Use a UIImageView as the backing for the empty view
+                let placeholderImageView = UIImageView(image: placeholderImage)
+                placeholderImageView.contentMode = .scaleAspectFit
+                placeholderImageView.frame = emptyView.bounds
+                emptyView.addSubview(placeholderImageView)
+                emptyView.backgroundColor = .clear
+                imageView = emptyView
+            } else {
+                // Create a minimal empty view
+                let emptyView = SVGKFastImageView(frame: .zero)
+                emptyView.backgroundColor = .clear
+                imageView = emptyView
+            }
         }
         
         return imageView
@@ -60,8 +113,13 @@ public struct SVGImageView: UIViewRepresentable {
     
     public func updateUIView(_ uiView: SVGKFastImageView, context: Context) {
         // Update size if needed
-        if let size = size, uiView.frame.size != size {
-            uiView.frame = CGRect(origin: .zero, size: size)
+        if let size = size, uiView.bounds.size != size {
+            uiView.bounds = CGRect(origin: .zero, size: size)
+            
+            // If this is a placeholder view with a UIImageView, update that too
+            if let imageView = uiView.subviews.first as? UIImageView {
+                imageView.frame = uiView.bounds
+            }
         }
         
         // Update tint color if needed
@@ -69,13 +127,35 @@ public struct SVGImageView: UIViewRepresentable {
             uiView.tintColor = tintColor
         }
     }
+    
+    // MARK: - Static Methods
+    
+    /// Returns a placeholder view when SVG loading fails
+    /// - Parameter systemName: SF Symbol name to use as placeholder
+    /// - Returns: A view displaying the system image
+    public static func placeholder(systemName: String) -> some View {
+        Image(systemName: systemName)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .foregroundColor(.gray)
+    }
 }
 
-// MARK: - Previews
+// MARK: - SwiftUI Previews
 struct SVGImageView_Previews: PreviewProvider {
     static var previews: some View {
-        SVGImageView(svgName: "example", size: CGSize(width: 100, height: 100))
-            .previewLayout(.sizeThatFits)
-            .padding()
+        Group {
+            // Preview with valid SVG
+            SVGImageView(svgName: "example", size: CGSize(width: 100, height: 100))
+                .previewDisplayName("Valid SVG")
+            
+            // Preview with invalid SVG - should show placeholder
+            SVGImageView(svgName: "nonexistent", 
+                        size: CGSize(width: 100, height: 100),
+                        placeholderImage: UIImage(systemName: "exclamationmark.triangle"))
+                .previewDisplayName("Invalid SVG with Placeholder")
+        }
+        .previewLayout(.sizeThatFits)
+        .padding()
     }
 } 

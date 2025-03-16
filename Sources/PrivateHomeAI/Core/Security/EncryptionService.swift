@@ -2,7 +2,7 @@ import Foundation
 import CryptoSwift
 
 /// Service for encrypting and decrypting data
-class EncryptionService {
+class EncryptionService: EncryptionServiceProtocol {
     /// Shared instance for singleton access
     static let shared = EncryptionService()
     
@@ -16,7 +16,7 @@ class EncryptionService {
     private let keyIdentifier = "encryption_key"
     
     /// Private initializer for singleton pattern
-    private init() {
+    internal init() {
         // Ensure encryption key exists
         if !hasEncryptionKey() {
             _ = generateEncryptionKey()
@@ -47,14 +47,33 @@ class EncryptionService {
         return KeychainService.shared.save(data: keyData, for: keyIdentifier)
     }
     
-    /// Encrypt data using AES-GCM
-    /// - Parameter data: The data to encrypt
-    /// - Returns: The encrypted data, or nil if encryption fails
-    func encrypt(_ data: Data) -> Data? {
-        guard let key = retrieveEncryptionKey() else {
-            return nil
+    /// Generate a random key
+    /// - Returns: A random key as Data
+    func generateKey() -> Data {
+        var keyData = Data(count: keySize)
+        _ = keyData.withUnsafeMutableBytes { pointer in
+            SecRandomCopyBytes(kSecRandomDefault, keySize, pointer.baseAddress!)
         }
-        
+        return keyData
+    }
+    
+    /// Generate a random key string of specified length
+    /// - Parameter length: Length of the key in bytes
+    /// - Returns: A random key as a hexadecimal string
+    func generateRandomKey(length: Int) -> String {
+        var keyData = Data(count: length)
+        _ = keyData.withUnsafeMutableBytes { pointer in
+            SecRandomCopyBytes(kSecRandomDefault, length, pointer.baseAddress!)
+        }
+        return keyData.map { String(format: "%02hhx", $0) }.joined()
+    }
+    
+    /// Encrypt data using AES-GCM
+    /// - Parameters:
+    ///   - data: The data to encrypt
+    ///   - key: The encryption key
+    /// - Returns: The encrypted data, or nil if encryption fails
+    func encrypt(data: Data, with key: Data) -> Data? {
         do {
             // Generate random IV
             var iv = Data(count: ivSize)
@@ -80,6 +99,44 @@ class EncryptionService {
         }
     }
     
+    /// Decrypt data using AES-GCM
+    /// - Parameters:
+    ///   - data: The encrypted data (IV + ciphertext)
+    ///   - key: The decryption key
+    /// - Returns: The decrypted data, or nil if decryption fails
+    func decrypt(data: Data, with key: Data) -> Data? {
+        guard data.count > ivSize else {
+            return nil
+        }
+        
+        do {
+            // Extract IV and ciphertext
+            let iv = data.prefix(ivSize)
+            let ciphertext = data.suffix(from: ivSize)
+            
+            // Create AES-GCM cipher
+            let gcm = GCM(iv: iv.bytes, mode: .combined)
+            let aes = try AES(key: key.bytes, blockMode: gcm, padding: .pkcs7)
+            
+            // Decrypt data
+            let decryptedBytes = try aes.decrypt(ciphertext.bytes)
+            return Data(decryptedBytes)
+        } catch {
+            return nil
+        }
+    }
+    
+    /// Encrypt data using the stored encryption key
+    /// - Parameter data: The data to encrypt
+    /// - Returns: The encrypted data, or nil if encryption fails
+    func encrypt(_ data: Data) -> Data? {
+        guard let key = retrieveEncryptionKey() else {
+            return nil
+        }
+        
+        return encrypt(data: data, with: key)
+    }
+    
     /// Encrypt a string using AES-GCM
     /// - Parameter string: The string to encrypt
     /// - Returns: The encrypted data as a base64 string, or nil if encryption fails
@@ -92,30 +149,15 @@ class EncryptionService {
         return encryptedData.base64EncodedString()
     }
     
-    /// Decrypt data using AES-GCM
+    /// Decrypt data using the stored encryption key
     /// - Parameter encryptedData: The encrypted data (IV + ciphertext)
     /// - Returns: The decrypted data, or nil if decryption fails
     func decrypt(_ encryptedData: Data) -> Data? {
-        guard let key = retrieveEncryptionKey(),
-              encryptedData.count > ivSize else {
+        guard let key = retrieveEncryptionKey() else {
             return nil
         }
         
-        do {
-            // Extract IV and ciphertext
-            let iv = encryptedData.prefix(ivSize)
-            let ciphertext = encryptedData.suffix(from: ivSize)
-            
-            // Create AES-GCM cipher
-            let gcm = GCM(iv: iv.bytes, mode: .combined)
-            let aes = try AES(key: key.bytes, blockMode: gcm, padding: .pkcs7)
-            
-            // Decrypt data
-            let decryptedBytes = try aes.decrypt(ciphertext.bytes)
-            return Data(decryptedBytes)
-        } catch {
-            return nil
-        }
+        return decrypt(data: encryptedData, with: key)
     }
     
     /// Decrypt a base64 string using AES-GCM

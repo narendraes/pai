@@ -130,4 +130,22 @@ If you encounter any issues:
 2. Verify that the Private Home AI package builds successfully on its own
 3. Check that all dependencies are properly resolved
 4. Try cleaning the build folder and rebuilding
-5. Ensure the simulator is running the correct iOS version (15.0 or later) 
+5. Ensure the simulator is running the correct iOS version (15.0 or later)
+
+# UI Component Development Guidelines
+
+## Required Testing
+- Unit tests for all rendering paths
+- Tests for missing resources
+- Memory leak tests
+- Accessibility tests
+
+## Error Handling
+- All components must handle missing resources gracefully
+- User-friendly error states required
+- Logging of all rendering failures
+
+## Documentation
+- Clear API documentation
+- Sample usage in code comments
+- Limitations and edge cases noted 

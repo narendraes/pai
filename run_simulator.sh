@@ -11,7 +11,6 @@ echo "Creating Xcode project with target..."
 TEMP_DIR="PrivateHomeAIRunner"
 rm -rf "$TEMP_DIR"
 mkdir -p "$TEMP_DIR/Sources/PrivateHomeAIRunner"
-mkdir -p "$TEMP_DIR/Sources/PrivateHomeAIRunner/Resources"
 
 # Create the Swift files
 cat > "$TEMP_DIR/Sources/PrivateHomeAIRunner/PrivateHomeAIRunnerApp.swift" << EOF
@@ -44,8 +43,35 @@ struct PrivateHomeAIRunnerApp: App {
 }
 EOF
 
-# Create Info.plist with hardcoded values instead of Xcode variables
-cat > "$TEMP_DIR/Sources/PrivateHomeAIRunner/Resources/Info.plist" << EOF
+# Create a new Xcode project using Swift Package Manager
+echo "Creating Swift package for the runner app..."
+cat > "$TEMP_DIR/Package.swift" << EOF
+// swift-tools-version:5.7
+import PackageDescription
+
+let package = Package(
+    name: "PrivateHomeAIRunner",
+    platforms: [
+        .iOS(.v15),
+        .macOS(.v12)
+    ],
+    dependencies: [
+        .package(path: "../"),
+    ],
+    targets: [
+        .executableTarget(
+            name: "PrivateHomeAIRunner",
+            dependencies: [
+                .product(name: "PrivateHomeAI", package: "pai")
+            ]
+        ),
+    ]
+)
+EOF
+
+# Create Info.plist file directly in the project directory
+mkdir -p "$TEMP_DIR/PrivateHomeAIRunner.xcodeproj"
+cat > "$TEMP_DIR/PrivateHomeAIRunner.xcodeproj/Info.plist" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -89,35 +115,6 @@ cat > "$TEMP_DIR/Sources/PrivateHomeAIRunner/Resources/Info.plist" << EOF
 	</array>
 </dict>
 </plist>
-EOF
-
-# Create a new Xcode project using Swift Package Manager
-echo "Creating Swift package for the runner app..."
-cat > "$TEMP_DIR/Package.swift" << EOF
-// swift-tools-version:5.7
-import PackageDescription
-
-let package = Package(
-    name: "PrivateHomeAIRunner",
-    platforms: [
-        .iOS(.v15),
-        .macOS(.v12)
-    ],
-    dependencies: [
-        .package(path: "../"),
-    ],
-    targets: [
-        .executableTarget(
-            name: "PrivateHomeAIRunner",
-            dependencies: [
-                .product(name: "PrivateHomeAI", package: "pai")
-            ],
-            resources: [
-                .process("Resources")
-            ]
-        ),
-    ]
-)
 EOF
 
 # Find available simulators

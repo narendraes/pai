@@ -2,7 +2,7 @@ import Foundation
 import Security
 
 /// Service for secure credential storage using the Keychain
-class KeychainService {
+class KeychainService: KeychainServiceProtocol {
     /// Shared instance
     static let shared = KeychainService()
     
@@ -10,7 +10,7 @@ class KeychainService {
     private let serviceName = "com.privateai.home"
     
     /// Private initializer for singleton
-    private init() {}
+    internal init() {}
     
     /// Save a string value to the keychain
     /// - Parameters:
@@ -33,7 +33,7 @@ class KeychainService {
     @discardableResult
     func save(data: Data, for key: String) -> Bool {
         // Delete existing item if it exists
-        delete(for: key)
+        delete(key: key)
         
         // Create query dictionary
         let query: [String: Any] = [
@@ -47,6 +47,31 @@ class KeychainService {
         // Add item to keychain
         let status = SecItemAdd(query as CFDictionary, nil)
         return status == errSecSuccess
+    }
+    
+    /// Save data to the keychain with throws
+    /// - Parameters:
+    ///   - key: Key to associate with the data
+    ///   - data: Data to save
+    /// - Throws: Error if save fails
+    func save(key: String, data: Data) throws {
+        // Delete existing item if it exists
+        delete(key: key)
+        
+        // Create query dictionary
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: serviceName,
+            kSecAttrAccount as String: key,
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        ]
+        
+        // Add item to keychain
+        let status = SecItemAdd(query as CFDictionary, nil)
+        if status != errSecSuccess {
+            throw NSError(domain: "com.privateai.home.keychain", code: Int(status), userInfo: [NSLocalizedDescriptionKey: "Failed to save to keychain"])
+        }
     }
     
     /// Retrieve a string value from the keychain
@@ -87,7 +112,7 @@ class KeychainService {
     /// - Parameter key: Key associated with the item
     /// - Returns: True if successful, false otherwise
     @discardableResult
-    func delete(for key: String) -> Bool {
+    func delete(key: String) -> Bool {
         // Create query dictionary
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,

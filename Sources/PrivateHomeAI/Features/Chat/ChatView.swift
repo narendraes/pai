@@ -76,11 +76,13 @@ struct ChatView: View {
                 }
             }
             .sheet(isPresented: $showModelSelector) {
-                ModelSelectorView(
-                    selectedModel: $viewModel.selectedModel,
-                    availableModels: viewModel.availableModels
-                )
-                .presentationDetents([.medium])
+                Group {
+                    ModelSelectorView(
+                        selectedModel: $viewModel.selectedModel,
+                        availableModels: viewModel.availableModels
+                    )
+                    .modifier(SheetDetentModifier())
+                }
             }
             .onAppear {
                 viewModel.loadModels()
@@ -170,5 +172,15 @@ struct ModelSelectorView: View {
 struct ChatView_Previews: PreviewProvider {
     static var previews: some View {
         ChatView()
+    }
+}
+
+struct SheetDetentModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 16.0, *) {
+            content.presentationDetents([.medium])
+        } else {
+            content
+        }
     }
 } 

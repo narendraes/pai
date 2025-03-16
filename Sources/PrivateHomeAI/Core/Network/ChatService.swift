@@ -54,26 +54,28 @@ class ChatService: ObservableObject {
         isGeneratingResponse = true
         
         // Convert chat history to API format
-        var apiMessages = [ChatMessage]()
+        var apiMessages: [OllamaAPIMessage] = []
         
         // Add system message
-        apiMessages.append(ChatMessage(role: .system, content: systemPrompt))
+        let systemMessage = OllamaAPIMessage(role: .system, content: systemPrompt)
+        apiMessages.append(systemMessage)
         
         // Add last 10 messages from chat history (or fewer if not available)
         let recentMessages = chatHistory.suffix(10)
         for message in recentMessages {
-            let role: MessageRole
+            let apiRole: OllamaAPIMessageRole
             switch message.role {
             case .user:
-                role = .user
+                apiRole = .user
             case .assistant:
-                role = .assistant
+                apiRole = .assistant
             }
-            apiMessages.append(ChatMessage(role: role, content: message.content))
+            let apiMessage = OllamaAPIMessage(role: apiRole, content: message.content)
+            apiMessages.append(apiMessage)
         }
         
         // Generate response
-        ollamaClient.generateResponse(messages: apiMessages) { [weak self] result in
+        ollamaClient.generateResponse(messages: apiMessages) { [weak self] (result: Result<String, Error>) in
             guard let self = self else { return }
             
             // Reset generating flag
@@ -128,14 +130,14 @@ struct ChatMessageViewModel: Identifiable, Codable {
     let content: String
     
     /// Message role
-    let role: MessageRole
+    let role: ViewMessageRole
     
     /// Message timestamp
     let timestamp: Date
 }
 
 /// Message role for view model
-enum MessageRole: String, Codable {
+enum ViewMessageRole: String, Codable {
     case user
     case assistant
 } 

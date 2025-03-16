@@ -106,7 +106,7 @@ struct SettingsView: View {
                     .frame(width: 10, height: 10)
                 Text("Disconnected")
                     .foregroundColor(.red)
-            case .error(let message):
+            case .error(_):
                 Circle()
                     .fill(Color.red)
                     .frame(width: 10, height: 10)

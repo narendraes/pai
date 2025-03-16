@@ -16,7 +16,7 @@ class DependencyContainer {
     }()
     
     lazy var sshConnectionService: SSHConnectionServiceProtocol = {
-        return SSHConnectionService()
+        return SSHConnectionService.shared
     }()
     
     lazy var ollamaService: OllamaServiceProtocol = {

@@ -1,6 +1,7 @@
 import Foundation
 
-enum NetworkError: Error, LocalizedError {
+/// Network-related errors
+public enum NetworkError: LocalizedError {
     case invalidURL
     case requestFailed(Error)
     case invalidResponse
@@ -11,8 +12,13 @@ enum NetworkError: Error, LocalizedError {
     case sshConnectionFailed(String)
     case timeout
     case unknown(Error)
+    case notConnected
+    case connectionFailed
+    case disconnectionFailed
+    case commandExecutionFailed
+    case fileTransferFailed
     
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .invalidURL:
             return "Invalid URL"
@@ -34,6 +40,16 @@ enum NetworkError: Error, LocalizedError {
             return "Request timed out"
         case .unknown(let error):
             return "Unknown error: \(error.localizedDescription)"
+        case .notConnected:
+            return "Not connected to server"
+        case .connectionFailed:
+            return "Failed to establish connection"
+        case .disconnectionFailed:
+            return "Failed to disconnect"
+        case .commandExecutionFailed:
+            return "Failed to execute command"
+        case .fileTransferFailed:
+            return "Failed to transfer file"
         }
     }
 } 

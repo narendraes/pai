@@ -20,8 +20,17 @@ public class AppState: ObservableObject {
     @Published public var showJailbreakAlert: Bool = false
     
     /// Initialize a new app state
-    public init() {
+    public init(
+        sshConnectionService: SSHConnectionServiceProtocol? = nil,
+        jailbreakDetectionService: JailbreakDetectionServiceProtocol? = nil
+    ) {
+        self.sshConnectionService = sshConnectionService ?? DependencyContainer.shared.sshConnectionService
+        self.jailbreakDetectionService = jailbreakDetectionService ?? DependencyContainer.shared.jailbreakDetectionService
+        
         LoggingService.shared.log(category: .startup, level: .info, message: "AppState initialized")
+        
+        setupObservers()
+        checkJailbreak()
     }
     
     /// Tab selection for the app
@@ -41,17 +50,6 @@ public class AppState: ObservableObject {
     
     // Cancellables
     private var cancellables = Set<AnyCancellable>()
-    
-    init(
-        sshConnectionService: SSHConnectionServiceProtocol? = nil,
-        jailbreakDetectionService: JailbreakDetectionServiceProtocol? = nil
-    ) {
-        self.sshConnectionService = sshConnectionService ?? DependencyContainer.shared.sshConnectionService
-        self.jailbreakDetectionService = jailbreakDetectionService ?? DependencyContainer.shared.jailbreakDetectionService
-        
-        setupObservers()
-        checkJailbreak()
-    }
     
     private func setupObservers() {
         // Observe SSH connection status

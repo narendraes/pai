@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:PrivateHomeAIDemo}",
+            "name": "Debug PrivateHomeAIDemo",
+            "program": "${workspaceFolder:PrivateHomeAIDemo}/.build/debug/PrivateHomeAIDemo",
+            "preLaunchTask": "swift: Build Debug PrivateHomeAIDemo"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:PrivateHomeAIDemo}",
+            "name": "Release PrivateHomeAIDemo",
+            "program": "${workspaceFolder:PrivateHomeAIDemo}/.build/release/PrivateHomeAIDemo",
+            "preLaunchTask": "swift: Build Release PrivateHomeAIDemo"
+        }
+    ]
+}

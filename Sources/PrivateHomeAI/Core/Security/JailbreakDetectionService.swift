@@ -2,12 +2,12 @@ import Foundation
 import UIKit
 
 /// Service for detecting jailbroken devices
-class JailbreakDetectionService {
+class JailbreakDetectionService: JailbreakDetectionServiceProtocol {
     /// Shared instance for singleton access
     static let shared = JailbreakDetectionService()
     
     /// Private initializer for singleton pattern
-    private init() {}
+    internal init() {}
     
     /// Check if the device is jailbroken
     /// - Returns: True if the device is jailbroken, false otherwise

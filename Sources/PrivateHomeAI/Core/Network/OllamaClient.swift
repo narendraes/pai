@@ -25,7 +25,7 @@ class OllamaClient {
     ///   - temperature: Temperature for generation (0.0-1.0)
     ///   - completion: Callback with generation result
     func generateResponse(
-        messages: [ChatMessage],
+        messages: [OllamaAPIMessage],
         model: String? = nil,
         temperature: Double = 0.7,
         completion: @escaping (Result<String, Error>) -> Void
@@ -68,7 +68,7 @@ class OllamaClient {
     ///   - onToken: Callback for each token
     ///   - completion: Callback with final generation result
     func streamResponse(
-        messages: [ChatMessage],
+        messages: [OllamaAPIMessage],
         model: String? = nil,
         temperature: Double = 0.7,
         onToken: @escaping (String) -> Void,
@@ -133,7 +133,7 @@ class OllamaClient {
     // MARK: - Private Methods
     
     /// Simulate API call for demo purposes
-    private func simulateAPICall(messages: [ChatMessage], completion: @escaping (Result<String, Error>) -> Void) {
+    private func simulateAPICall(messages: [OllamaAPIMessage], completion: @escaping (Result<String, Error>) -> Void) {
         DispatchQueue.global().async {
             // Simulate network delay
             Thread.sleep(forTimeInterval: 1.0)
@@ -152,7 +152,7 @@ class OllamaClient {
     
     /// Simulate streaming API call for demo purposes
     private func simulateStreamingAPICall(
-        messages: [ChatMessage],
+        messages: [OllamaAPIMessage],
         onToken: @escaping (String) -> Void,
         completion: @escaping (Result<String, Error>) -> Void
     ) {
@@ -220,28 +220,4 @@ struct OllamaModel: Identifiable {
     
     /// Unique identifier
     var id: String { name }
-}
-
-/// Chat message for API communication
-struct ChatMessage {
-    /// Message role
-    let role: MessageRole
-    
-    /// Message content
-    let content: String
-    
-    /// API representation
-    var apiRepresentation: [String: String] {
-        [
-            "role": role.rawValue,
-            "content": content
-        ]
-    }
-}
-
-/// Message role
-enum MessageRole: String {
-    case system
-    case user
-    case assistant
 } 

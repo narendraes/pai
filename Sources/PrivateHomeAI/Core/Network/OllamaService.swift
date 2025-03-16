@@ -3,21 +3,22 @@ import Combine
 
 protocol OllamaServiceProtocol {
     func generateCompletion(prompt: String, model: String, temperature: Float) -> AnyPublisher<String, NetworkError>
-    func listModels() -> AnyPublisher<[OllamaModel], NetworkError>
+    func listModels() -> AnyPublisher<[OllamaModelInfo], NetworkError>
     func pullModel(model: String) -> AnyPublisher<Bool, NetworkError>
 }
 
-struct OllamaModel: Codable {
-    let name: String
-    let size: Int64
-    let modified: Date
-    
-    enum CodingKeys: String, CodingKey {
-        case name
-        case size
-        case modified
-    }
-}
+// This is now defined in OllamaModels.swift as OllamaModelInfo
+// struct OllamaModel: Codable {
+//     let name: String
+//     let size: Int64
+//     let modified: Date
+//     
+//     enum CodingKeys: String, CodingKey {
+//         case name
+//         case size
+//         case modified
+//     }
+// }
 
 struct OllamaCompletionRequest: Codable {
     let model: String
@@ -39,9 +40,10 @@ struct OllamaCompletionResponse: Codable {
     let done: Bool
 }
 
-struct OllamaListModelsResponse: Codable {
-    let models: [OllamaModel]
-}
+// This is now defined in OllamaModels.swift
+// struct OllamaListModelsResponse: Codable {
+//     let models: [OllamaModel]
+// }
 
 class OllamaService: OllamaServiceProtocol {
     private let networkService: NetworkService
@@ -71,7 +73,7 @@ class OllamaService: OllamaServiceProtocol {
             .eraseToAnyPublisher()
     }
     
-    func listModels() -> AnyPublisher<[OllamaModel], NetworkError> {
+    func listModels() -> AnyPublisher<[OllamaModelInfo], NetworkError> {
         let endpoint = Endpoint(
             path: "/api/tags",
             method: .get,

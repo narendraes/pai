@@ -8,28 +8,44 @@ struct MainTabView: View {
         TabView {
             HomeView()
                 .tabItem {
-                    Label("Home", systemImage: "house.fill")
+                    Label {
+                        Text("Home")
+                    } icon: {
+                        Image(systemName: "house.fill")
+                    }
                 }
             
             ChatView()
                 .tabItem {
-                    Label("Chat", systemImage: "message.fill")
+                    Label {
+                        Text("Chat")
+                    } icon: {
+                        Image(systemName: "message.fill")
+                    }
                 }
             
             DevicesView()
                 .tabItem {
-                    Label("Devices", systemImage: "display")
+                    Label {
+                        Text("Devices")
+                    } icon: {
+                        Image(systemName: "camera.fill")
+                    }
                 }
             
             SettingsView()
                 .tabItem {
-                    Label("Settings", systemImage: "gear")
+                    Label {
+                        Text("Settings")
+                    } icon: {
+                        Image(systemName: "gear")
+                    }
                 }
         }
         .accentColor(.blue)
         .overlay(
             Group {
-                if !appState.isConnectedToMac {
+                if !appState.isConnected {
                     ConnectionStatusOverlay(status: appState.connectionStatus)
                 }
             }

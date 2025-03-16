@@ -1,4 +1,5 @@
 import SwiftUI
+import LocalAuthentication
 
 /// A view that handles user login
 public struct LoginView: View {
@@ -9,6 +10,7 @@ public struct LoginView: View {
     @State private var isLoading: Bool = false
     @State private var errorMessage: String? = nil
     @State private var showBiometricLogin: Bool = false
+    @State private var showError: Bool = false
     
     public var body: some View {
         VStack(spacing: 20) {
@@ -127,19 +129,16 @@ public struct LoginView: View {
     private func authenticateWithBiometrics() {
         LoggingService.shared.log(category: .authentication, level: .info, message: "Biometric authentication attempt")
         
-        BiometricAuthService.shared.authenticate(reason: "Log in to Private Home AI") { success, error in
+        BiometricAuthService.shared.authenticate(reason: "Log in to Private Home AI") { result in
             DispatchQueue.main.async {
-                if success {
+                switch result {
+                case .success:
                     LoggingService.shared.log(category: .authentication, level: .info, message: "Biometric authentication successful")
                     appState.isAuthenticated = true
-                } else {
-                    if let error = error {
-                        LoggingService.shared.log(category: .authentication, level: .warning, message: "Biometric authentication failed: \(error.localizedDescription)")
-                        errorMessage = error.localizedDescription
-                    } else {
-                        LoggingService.shared.log(category: .authentication, level: .warning, message: "Biometric authentication failed")
-                        errorMessage = "Authentication failed"
-                    }
+                case .failure(let error):
+                    LoggingService.shared.log(category: .authentication, level: .error, message: "Biometric authentication failed: \(error.localizedDescription)")
+                    errorMessage = "Biometric authentication failed"
+                    showError = true
                 }
             }
         }

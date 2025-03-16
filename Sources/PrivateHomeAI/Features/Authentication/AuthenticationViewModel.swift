@@ -97,8 +97,9 @@ class AuthenticationViewModel: ObservableObject {
             // Encrypt and store the credentials
             let credentials = "\(username):\(password)@\(host)"
             if let credentialsData = credentials.data(using: .utf8) {
-                let encryptedData = try encryptionService.encrypt(credentialsData, with: encryptionKey)
-                try keychainService.save(key: "sshCredentials", data: encryptedData)
+                if let encryptedData = encryptionService.encrypt(data: credentialsData, with: Data(encryptionKey.utf8)) {
+                    try keychainService.save(key: "sshCredentials", data: encryptedData)
+                }
             }
         } catch {
             print("Failed to store credentials: \(error)")
@@ -106,16 +107,16 @@ class AuthenticationViewModel: ObservableObject {
     }
     
     func logout() {
-        sshConnectionService.disconnect()
+        _ = sshConnectionService.disconnect()
         isAuthenticated = false
         username = ""
         password = ""
         
         // Clear stored credentials
-        do {
-            try keychainService.delete(key: "sshCredentials")
-        } catch {
-            print("Failed to delete credentials: \(error)")
+        if keychainService.delete(key: "sshCredentials") {
+            print("Successfully deleted credentials")
+        } else {
+            print("Failed to delete credentials")
         }
     }
 } 

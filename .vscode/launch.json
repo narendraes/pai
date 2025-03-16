@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug in iOS Simulator",
+            "program": "${workspaceFolder}/.build/debug/PrivateHomeAI",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Build iOS App"
+        }
+    ]
+} 

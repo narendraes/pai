@@ -1,0 +1,66 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build iOS App",
+            "type": "shell",
+            "command": "cd ${workspaceFolder} && swift build -Xswiftc \"-sdk\" -Xswiftc \"$(xcrun --sdk iphonesimulator --show-sdk-path)\" -Xswiftc \"-target\" -Xswiftc \"x86_64-apple-ios15.0-simulator\"",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Open in Xcode",
+            "type": "shell",
+            "command": "cd ${workspaceFolder} && xed .",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run in iOS Simulator",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/PrivateHomeAIDemo && xcrun simctl launch booted com.example.PrivateHomeAIDemo",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "List Available Simulators",
+            "type": "shell",
+            "command": "xcrun simctl list devices available",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Build and Run in Simulator",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Build iOS App",
+                "Run in iOS Simulator"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        }
+    ]
+} 

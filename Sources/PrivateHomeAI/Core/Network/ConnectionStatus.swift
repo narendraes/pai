@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 /// Represents the current connection status
-public enum ConnectionStatus: CustomStringConvertible {
+public enum ConnectionStatus: CustomStringConvertible, Equatable {
     case connected
     case disconnected
     case connecting

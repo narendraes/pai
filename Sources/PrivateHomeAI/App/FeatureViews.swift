@@ -10,13 +10,16 @@ public struct ChatView: View {
     public init() {}
     
     public var body: some View {
-        VStack {
-            Text("Chat")
-                .font(.largeTitle)
-                .padding()
-            
-            Text("Coming soon...")
-                .foregroundColor(.secondary)
+        NavigationView {
+            VStack {
+                Text("Chat")
+                    .font(.largeTitle)
+                    .padding()
+                
+                Text("Coming soon...")
+                    .foregroundColor(.secondary)
+            }
+            .navigationTitle("Chat")
         }
     }
 }
@@ -27,13 +30,16 @@ public struct CameraView: View {
     public init() {}
     
     public var body: some View {
-        VStack {
-            Text("Camera")
-                .font(.largeTitle)
-                .padding()
-            
-            Text("Coming soon...")
-                .foregroundColor(.secondary)
+        NavigationView {
+            VStack {
+                Text("Camera")
+                    .font(.largeTitle)
+                    .padding()
+                
+                Text("Coming soon...")
+                    .foregroundColor(.secondary)
+            }
+            .navigationTitle("Camera")
         }
     }
 }
@@ -44,13 +50,16 @@ public struct AnalysisView: View {
     public init() {}
     
     public var body: some View {
-        VStack {
-            Text("Analysis")
-                .font(.largeTitle)
-                .padding()
-            
-            Text("Coming soon...")
-                .foregroundColor(.secondary)
+        NavigationView {
+            VStack {
+                Text("Analysis")
+                    .font(.largeTitle)
+                    .padding()
+                
+                Text("Coming soon...")
+                    .foregroundColor(.secondary)
+            }
+            .navigationTitle("Analysis")
         }
     }
 }
@@ -61,31 +70,33 @@ public struct SettingsView: View {
     public init() {}
     
     public var body: some View {
-        Form {
-            Section(header: Text("App Settings")) {
-                Toggle("Dark Mode", isOn: .constant(true))
-                Toggle("Notifications", isOn: .constant(true))
-            }
-            
-            Section(header: Text("Connection")) {
-                HStack {
-                    Text("Status")
-                    Spacer()
-                    Label(
-                        appState.connectionStatus.description,
-                        systemImage: appState.connectionStatus.iconName
-                    )
-                    .foregroundColor(appState.connectionStatus.color)
+        NavigationView {
+            Form {
+                Section(header: Text("App Settings")) {
+                    Toggle("Dark Mode", isOn: $appState.settings.useDarkMode)
+                    Toggle("Notifications", isOn: $appState.settings.enableNotifications)
+                }
+                
+                Section(header: Text("Connection")) {
+                    HStack {
+                        Text("Status")
+                        Spacer()
+                        Label(
+                            appState.connectionStatus.description,
+                            systemImage: appState.connectionStatus.iconName
+                        )
+                        .foregroundColor(appState.connectionStatus.color)
+                    }
+                }
+                
+                Section(header: Text("About")) {
+                    Text("Private Home AI")
+                    Text("Version 1.0.0")
+                        .foregroundColor(.secondary)
                 }
             }
-            
-            Section(header: Text("About")) {
-                Text("Private Home AI")
-                Text("Version 1.0.0")
-                    .foregroundColor(.secondary)
-            }
+            .navigationTitle("Settings")
         }
-        .navigationTitle("Settings")
     }
 }
 

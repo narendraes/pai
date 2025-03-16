@@ -2,9 +2,6 @@ import Foundation
 import Combine
 import SwiftUI
 
-// Import app types
-@_exported import enum PrivateHomeAI.ConnectionStatus
-
 /// The main app state for the Private Home AI app
 public class AppState: ObservableObject {
     /// Whether the user is authenticated

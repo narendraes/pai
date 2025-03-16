@@ -55,13 +55,13 @@ class StorageService {
 }
 
 // ConnectionStatus enum definition
-enum ConnectionStatus: CustomStringConvertible {
+public enum ConnectionStatus: CustomStringConvertible {
     case connected
     case disconnected
     case connecting
     case error(String)
     
-    var description: String {
+    public var description: String {
         switch self {
         case .connected: return "Connected"
         case .disconnected: return "Disconnected"
@@ -104,7 +104,7 @@ struct NookuApp: App {
 }
 
 /// Tab selection options
-enum TabSelection {
+public enum TabSelection {
     case chat
     case cameras
     case analysis

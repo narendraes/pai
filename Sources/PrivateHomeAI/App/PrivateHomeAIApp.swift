@@ -5,13 +5,20 @@ import Combine
 struct PrivateHomeAIApp: App {
     @StateObject private var appState = AppState()
     
+    init() {
+        print("DEBUG: PrivateHomeAIApp initializing...")
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(appState)
                 .onAppear {
+                    print("DEBUG: PrivateHomeAIApp rendering ContentView...")
+                    print("DEBUG: ContentView onAppear triggered")
                     // Check for jailbreak
                     if JailbreakDetectionService.shared.isJailbroken() {
+                        print("DEBUG: Jailbreak detected")
                         appState.showJailbreakAlert = true
                     }
                 }

@@ -4,86 +4,43 @@ import SwiftUI
 public struct ContentView: View {
     @EnvironmentObject var appState: AppState
     
-    public init() {}
+    public init() {
+        print("DEBUG: ContentView initializing...")
+    }
     
     public var body: some View {
-        ZStack {
-            if appState.isAuthenticated {
-                MainTabView()
-            } else {
-                LoginView()
-            }
-        }
-        .overlay(
-            ConnectionStatusView()
+        print("DEBUG: ContentView rendering basic content...")
+        
+        // Ultra simplified version with no dependencies
+        return VStack {
+            Text("Private Home AI")
+                .font(.largeTitle)
                 .padding()
-                .background(Color.black.opacity(0.7))
-                .cornerRadius(10)
-                .padding(),
-            alignment: .top
-        )
-        .onAppear {
-            LoggingService.shared.log(category: .ui, level: .info, message: "ContentView appeared")
-        }
-    }
-}
-
-/// A view that displays the current connection status
-struct ConnectionStatusView: View {
-    @EnvironmentObject var appState: AppState
-    @State private var isConnecting = false
-    
-    var body: some View {
-        HStack {
-            Image(systemName: appState.connectionStatus.iconName)
-                .foregroundColor(appState.connectionStatus.color)
             
-            Text(appState.connectionStatus.description)
-                .foregroundColor(.white)
+            Image(systemName: "house.fill")
+                .resizable()
+                .frame(width: 100, height: 100)
+                .foregroundColor(.blue)
+                .padding()
             
-            Spacer()
+            Text("A secure home automation solution")
+                .font(.headline)
+                .padding()
             
-            if appState.connectionStatus == .disconnected {
-                Button(action: connect) {
-                    if isConnecting {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    } else {
-                        Text("Connect")
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(Color.blue)
-                            .cornerRadius(5)
-                    }
-                }
-                .disabled(isConnecting)
+            Text("Connection Status: \(appState.connectionStatus.description)")
+                .padding()
+            
+            Button("Connect") {
+                print("DEBUG: Connect button tapped")
             }
+            .padding()
+            .background(Color.blue)
+            .foregroundColor(.white)
+            .cornerRadius(10)
         }
-        .padding(.horizontal)
+        .padding()
         .onAppear {
-            LoggingService.shared.log(category: .ui, level: .info, message: "ConnectionStatusView appeared")
-        }
-    }
-    
-    /// Connect to the server
-    private func connect() {
-        LoggingService.shared.log(category: .network, level: .info, message: "Connection attempt initiated")
-        
-        isConnecting = true
-        
-        // Simulate connection process
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            appState.connectionStatus = .connecting
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                // Simulate successful connection
-                appState.connectionStatus = .connected
-                appState.isConnected = true
-                isConnecting = false
-                
-                LoggingService.shared.log(category: .network, level: .info, message: "Connection successful")
-            }
+            print("DEBUG: Basic ContentView appeared")
         }
     }
 }

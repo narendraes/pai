@@ -1,9 +1,11 @@
 import SwiftUI
 
-struct ChatView: View {
+public struct ChatView: View {
     @EnvironmentObject var appState: AppState
     
-    var body: some View {
+    public init() {}
+    
+    public var body: some View {
         VStack {
             Text("Chat")
                 .font(.largeTitle)
@@ -15,10 +17,12 @@ struct ChatView: View {
     }
 }
 
-struct CameraView: View {
+public struct CameraView: View {
     @EnvironmentObject var appState: AppState
     
-    var body: some View {
+    public init() {}
+    
+    public var body: some View {
         VStack {
             Text("Cameras")
                 .font(.largeTitle)
@@ -30,10 +34,12 @@ struct CameraView: View {
     }
 }
 
-struct AnalysisView: View {
+public struct AnalysisView: View {
     @EnvironmentObject var appState: AppState
     
-    var body: some View {
+    public init() {}
+    
+    public var body: some View {
         VStack {
             Text("Analysis")
                 .font(.largeTitle)
@@ -45,10 +51,12 @@ struct AnalysisView: View {
     }
 }
 
-struct SettingsView: View {
+public struct SettingsView: View {
     @EnvironmentObject var appState: AppState
     
-    var body: some View {
+    public init() {}
+    
+    public var body: some View {
         Form {
             Section(header: Text("App Settings")) {
                 Toggle("Dark Mode", isOn: .constant(true))

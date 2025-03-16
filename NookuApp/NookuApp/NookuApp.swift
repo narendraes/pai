@@ -1,8 +1,8 @@
 import SwiftUI
-import PrivateHomeAI
+import Nooku
 
 @main
-struct PrivateHomeAIDemoApp: App {
+struct NookuApp: App {
     @StateObject private var appState = AppState()
     
     var body: some Scene {

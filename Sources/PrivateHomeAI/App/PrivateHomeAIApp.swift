@@ -2,6 +2,7 @@ import SwiftUI
 import Combine
 import Security
 import LocalAuthentication
+import UIKit
 
 @main
 struct PrivateHomeAIApp: App {

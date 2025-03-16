@@ -1,6 +1,12 @@
 import Foundation
 import UIKit
 
+/// Protocol defining jailbreak detection functionality
+public protocol JailbreakDetectionServiceProtocol {
+    /// Check if the device is jailbroken
+    func isJailbroken() -> Bool
+}
+
 /// Service for detecting jailbroken devices
 public class JailbreakDetectionService: JailbreakDetectionServiceProtocol {
     /// Shared instance for singleton access

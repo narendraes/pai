@@ -1,6 +1,33 @@
 import Foundation
 import Combine
 
+/// Network-related errors
+public enum NetworkError: Error, LocalizedError {
+    case notConnected
+    case connectionFailed
+    case authenticationFailed
+    case commandFailed
+    case fileTransferFailed
+    case timeout
+    
+    public var errorDescription: String? {
+        switch self {
+        case .notConnected:
+            return "Not connected to server"
+        case .connectionFailed:
+            return "Failed to connect to server"
+        case .authenticationFailed:
+            return "Authentication failed"
+        case .commandFailed:
+            return "Command execution failed"
+        case .fileTransferFailed:
+            return "File transfer failed"
+        case .timeout:
+            return "Connection timed out"
+        }
+    }
+}
+
 /// Service for managing SSH connections to the home server
 public class SSHService: ObservableObject {
     /// Shared instance

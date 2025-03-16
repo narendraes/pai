@@ -20,5 +20,9 @@
         "*.swift": "swift"
     },
     "xcodeIntegration.projectPath": "/Users/nsov/working/pai",
-    "xcodeIntegration.xcodeProjectPath": "/Users/nsov/working/pai/PrivateHomeAI.xcodeproj"
+    "xcodeIntegration.xcodeProjectPath": "/Users/nsov/working/pai/PrivateHomeAI.xcodeproj",
+    "swift.path": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin",
+    "swift.swiftEnvironmentVariables": {
+        "DEVELOPER_DIR": "/Applications/Xcode.app"
+    }
 } 

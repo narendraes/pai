@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The main content view for the Private Home AI app
+/// The main content view for the Nooku app
 public struct ContentView: View {
     @EnvironmentObject var appState: AppState
     
@@ -13,7 +13,7 @@ public struct ContentView: View {
         
         // Ultra simplified version with no dependencies
         return VStack {
-            Text("Private Home AI")
+            Text("Nooku")
                 .font(.largeTitle)
                 .padding()
             

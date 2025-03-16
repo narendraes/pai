@@ -2,15 +2,15 @@
 import PackageDescription
 
 let package = Package(
-    name: "PrivateHomeAI",
+    name: "Nooku",
     platforms: [
         .iOS(.v15),
         .macOS(.v12)
     ],
     products: [
         .library(
-            name: "PrivateHomeAI",
-            targets: ["PrivateHomeAI"]),
+            name: "Nooku",
+            targets: ["Nooku"]),
     ],
     dependencies: [
         .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", from: "1.7.0"),
@@ -19,14 +19,18 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "PrivateHomeAI",
+            name: "Nooku",
             dependencies: ["CryptoSwift", "Alamofire", 
                            .product(name: "SSHClient", package: "swift-ssh-client")],
             resources: [
                 .process("Resources")
-            ]),
+            ],
+            swiftSettings: [
+                .define("SWIFT_PACKAGE")
+            ]
+        ),
         .testTarget(
-            name: "PrivateHomeAITests",
-            dependencies: ["PrivateHomeAI"]),
+            name: "NookuTests",
+            dependencies: ["Nooku"]),
     ]
 )

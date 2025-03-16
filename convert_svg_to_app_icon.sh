@@ -28,7 +28,7 @@ if [ ! -f "$SVG_FILE" ]; then
 fi
 
 # Create AppIcon.appiconset directory if it doesn't exist
-ICON_DIR="PrivateHomeAI/Assets.xcassets/AppIcon.appiconset"
+ICON_DIR="Sources/Nooku/Resources/Assets.xcassets/AppIcon.appiconset"
 mkdir -p "$ICON_DIR"
 
 echo "Converting SVG to PNG for iOS app icons..."

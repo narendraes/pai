@@ -2,11 +2,11 @@ import SwiftUI
 import Combine
 
 @main
-struct PrivateHomeAIApp: App {
+struct NookuApp: App {
     @StateObject private var appState = AppState()
     
     init() {
-        print("DEBUG: PrivateHomeAIApp initializing...")
+        print("DEBUG: NookuApp initializing...")
     }
     
     var body: some Scene {
@@ -14,7 +14,7 @@ struct PrivateHomeAIApp: App {
             ContentView()
                 .environmentObject(appState)
                 .onAppear {
-                    print("DEBUG: PrivateHomeAIApp rendering ContentView...")
+                    print("DEBUG: NookuApp rendering ContentView...")
                     print("DEBUG: ContentView onAppear triggered")
                     // Check for jailbreak
                     if JailbreakDetectionService.shared.isJailbroken() {

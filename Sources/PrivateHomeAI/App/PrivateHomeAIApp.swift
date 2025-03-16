@@ -6,11 +6,11 @@ import Security
 import LocalAuthentication
 
 @main
-struct NookuApp: App {
+struct PrivateHomeAIApp: App {
     @StateObject private var appState = AppState()
     
     init() {
-        print("DEBUG: NookuApp initializing...")
+        print("DEBUG: PrivateHomeAIApp initializing...")
     }
     
     var body: some Scene {
@@ -18,7 +18,7 @@ struct NookuApp: App {
             ContentView()
                 .environmentObject(appState)
                 .onAppear {
-                    print("DEBUG: NookuApp rendering ContentView...")
+                    print("DEBUG: PrivateHomeAIApp rendering ContentView...")
                     print("DEBUG: ContentView onAppear triggered")
                     // Check for jailbreak
                     if JailbreakDetectionService.shared.isJailbroken() {

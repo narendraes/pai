@@ -50,16 +50,18 @@ public class AppState: ObservableObject {
 
 // MARK: - App Settings
 extension AppState {
-    struct AppSettings {
-        var useDarkMode = true
-        var enableNotifications = true
-        var defaultCameraId: String?
+    public struct AppSettings {
+        public var useDarkMode = true
+        public var enableNotifications = true
+        public var defaultCameraId: String?
         
-        enum RecordingQuality {
+        public enum RecordingQuality {
             case low, medium, high
         }
-        var recordingQuality: RecordingQuality = .high
+        public var recordingQuality: RecordingQuality = .high
+        
+        public init() {}
     }
     
-    @Published var settings = AppSettings()
+    @Published public var settings = AppSettings()
 } 

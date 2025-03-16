@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 /// Represents the current connection status
 public enum ConnectionStatus: CustomStringConvertible {

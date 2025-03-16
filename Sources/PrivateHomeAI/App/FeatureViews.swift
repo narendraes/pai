@@ -67,8 +67,11 @@ public struct SettingsView: View {
                 HStack {
                     Text("Status")
                     Spacer()
-                    Text(appState.connectionStatus.description)
-                        .foregroundColor(appState.isConnected ? .green : .red)
+                    Label(
+                        appState.connectionStatus.description,
+                        systemImage: appState.connectionStatus.iconName
+                    )
+                    .foregroundColor(appState.connectionStatus.color)
                 }
             }
             

@@ -26,7 +26,9 @@ let package = Package(
                 .process("Resources")
             ],
             swiftSettings: [
-                .define("SWIFT_PACKAGE")
+                .define("SWIFT_PACKAGE"),
+                .define("USE_UNIFORM_TYPE_IDENTIFIERS", .when(platforms: [.iOS, .macOS])),
+                .define("DISABLE_ALAMOFIRE_MULTIPART", .when(platforms: [.iOS, .macOS]))
             ]
         ),
         .testTarget(

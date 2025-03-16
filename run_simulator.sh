@@ -1,24 +1,24 @@
 #!/bin/bash
 
-# Script to build and run Private Home AI on iOS Simulator
+# Script to build and run Nooku on iOS Simulator
 
-echo "Building and running Private Home AI on iOS Simulator..."
+echo "Building and running Nooku on iOS Simulator..."
 
 # Create a proper Xcode project with a target
 echo "Creating Xcode project with target..."
 
 # Create a temporary directory for the project and clean it if it exists
-TEMP_DIR="PrivateHomeAIRunner"
+TEMP_DIR="NookuRunner"
 rm -rf "$TEMP_DIR"
-mkdir -p "$TEMP_DIR/Sources/PrivateHomeAIRunner"
+mkdir -p "$TEMP_DIR/Sources/NookuRunner"
 
 # Create the Swift files
-cat > "$TEMP_DIR/Sources/PrivateHomeAIRunner/PrivateHomeAIRunnerApp.swift" << EOF
+cat > "$TEMP_DIR/Sources/NookuRunner/NookuRunnerApp.swift" << EOF
 import SwiftUI
-import PrivateHomeAI
+import Nooku
 
 @main
-struct PrivateHomeAIRunnerApp: App {
+struct NookuRunnerApp: App {
     @StateObject private var appState = AppState()
     
     var body: some Scene {
@@ -50,7 +50,7 @@ cat > "$TEMP_DIR/Package.swift" << EOF
 import PackageDescription
 
 let package = Package(
-    name: "PrivateHomeAIRunner",
+    name: "NookuRunner",
     platforms: [
         .iOS(.v15),
         .macOS(.v12)
@@ -60,9 +60,9 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "PrivateHomeAIRunner",
+            name: "NookuRunner",
             dependencies: [
-                .product(name: "PrivateHomeAI", package: "pai")
+                .product(name: "Nooku", package: "pai")
             ]
         ),
     ]
@@ -70,8 +70,8 @@ let package = Package(
 EOF
 
 # Create Info.plist file directly in the project directory
-mkdir -p "$TEMP_DIR/PrivateHomeAIRunner.xcodeproj"
-cat > "$TEMP_DIR/PrivateHomeAIRunner.xcodeproj/Info.plist" << EOF
+mkdir -p "$TEMP_DIR/NookuRunner.xcodeproj"
+cat > "$TEMP_DIR/NookuRunner.xcodeproj/Info.plist" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -79,13 +79,13 @@ cat > "$TEMP_DIR/PrivateHomeAIRunner.xcodeproj/Info.plist" << EOF
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
-	<string>PrivateHomeAIRunner</string>
+	<string>NookuRunner</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.privateai.home.runner</string>
+	<string>com.nooku.home.runner</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>PrivateHomeAIRunner</string>
+	<string>NookuRunner</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -147,10 +147,10 @@ xcrun simctl boot "$SIMULATOR_ID" || true
 
 # Install the app
 echo "Installing app on simulator..."
-xcrun simctl install "$SIMULATOR_ID" "$TEMP_DIR/.build/debug/PrivateHomeAIRunner"
+xcrun simctl install "$SIMULATOR_ID" "$TEMP_DIR/.build/debug/NookuRunner"
 
 # Launch the app
 echo "Launching app on simulator..."
-xcrun simctl launch "$SIMULATOR_ID" "com.privateai.home.runner"
+xcrun simctl launch "$SIMULATOR_ID" "com.nooku.home.runner"
 
-echo "Done! The Private Home AI app should now be running in the simulator." 
+echo "Done! The Nooku app should now be running in the simulator." 

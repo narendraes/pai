@@ -5,14 +5,14 @@ import LocalAuthentication
 import UIKit
 
 @main
-struct PrivateHomeAIApp: App {
+public struct PrivateHomeAIApp: App {
     @StateObject private var appState = AppState()
     
-    init() {
+    public init() {
         print("DEBUG: PrivateHomeAIApp initializing...")
     }
     
-    var body: some Scene {
+    public var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(appState)

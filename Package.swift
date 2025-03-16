@@ -20,16 +20,12 @@ let package = Package(
     targets: [
         .target(
             name: "Nooku",
-            dependencies: ["CryptoSwift", "Alamofire", 
-                           .product(name: "SSHClient", package: "swift-ssh-client")],
-            resources: [
-                .process("Resources")
+            dependencies: [
+                "CryptoSwift", 
+                "Alamofire",
+                .product(name: "SSHClient", package: "swift-ssh-client")
             ],
-            swiftSettings: [
-                .define("SWIFT_PACKAGE"),
-                .define("USE_UNIFORM_TYPE_IDENTIFIERS", .when(platforms: [.iOS, .macOS])),
-                .define("DISABLE_ALAMOFIRE_MULTIPART", .when(platforms: [.iOS, .macOS]))
-            ]
+            path: "Sources/Nooku"
         ),
         .testTarget(
             name: "NookuTests",

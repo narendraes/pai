@@ -14,25 +14,25 @@ public struct ContentView: View {
                 .tabItem {
                     Label("Chat", systemImage: "message.fill")
                 }
-                .tag(TabSelection.chat)
+                .tag(AppState.TabSelection.chat)
             
             CameraView()
                 .tabItem {
-                    Label("Cameras", systemImage: "video.fill")
+                    Label("Camera", systemImage: "video.fill")
                 }
-                .tag(TabSelection.cameras)
+                .tag(AppState.TabSelection.camera)
             
             AnalysisView()
                 .tabItem {
                     Label("Analysis", systemImage: "chart.bar.fill")
                 }
-                .tag(TabSelection.analysis)
+                .tag(AppState.TabSelection.analysis)
             
             SettingsView()
                 .tabItem {
                     Label("Settings", systemImage: "gear")
                 }
-                .tag(TabSelection.settings)
+                .tag(AppState.TabSelection.settings)
         }
         .onAppear {
             print("DEBUG: ContentView appeared")

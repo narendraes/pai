@@ -5,6 +5,11 @@ import Combine
 import Security
 import LocalAuthentication
 
+// Import app services
+@_exported import struct PrivateHomeAI.AppState
+@_exported import class PrivateHomeAI.JailbreakDetectionService
+@_exported import class PrivateHomeAI.SSHService
+
 @main
 struct PrivateHomeAIApp: App {
     @StateObject private var appState = AppState()
@@ -35,12 +40,4 @@ struct PrivateHomeAIApp: App {
                 }
         }
     }
-}
-
-/// Tab selection options
-public enum TabSelection {
-    case chat
-    case cameras
-    case analysis
-    case settings
 } 

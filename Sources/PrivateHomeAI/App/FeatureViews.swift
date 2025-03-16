@@ -1,5 +1,9 @@
 import SwiftUI
 
+// Import app types
+@_exported import struct PrivateHomeAI.AppState
+@_exported import enum PrivateHomeAI.ConnectionStatus
+
 public struct ChatView: View {
     @EnvironmentObject var appState: AppState
     
@@ -24,7 +28,7 @@ public struct CameraView: View {
     
     public var body: some View {
         VStack {
-            Text("Cameras")
+            Text("Camera")
                 .font(.largeTitle)
                 .padding()
             

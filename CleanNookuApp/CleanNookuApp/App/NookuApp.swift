@@ -1,4 +1,8 @@
 import SwiftUI
+import BackgroundTasks
+
+// Import CleanupScheduler
+import UIKit
 
 @main
 struct NookuApp: App {

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mac Camera Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        img { max-width: 100%; border: 1px solid #ddd; }
+        button { padding: 10px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Mac Camera Test</h1>
+    
+    <div>
+        <button id="listCameras">List Cameras</button>
+        <button id="takeSnapshot">Take Snapshot</button>
+        <button id="startStream">Start Stream</button>
+        <button id="stopStream">Stop Stream</button>
+    </div>
+    
+    <div id="cameraList"></div>
+    
+    <h2>Camera View</h2>
+    <img id="cameraView" src="" alt="No image available">
+    
+    <script>
+        const API_KEY = 'test-api-key';
+        const BASE_URL = 'http://localhost:8080';
+        let streamId = null;
+        let streamInterval = null;
+        
+        document.getElementById('listCameras').addEventListener('click', listCameras);
+        document.getElementById('takeSnapshot').addEventListener('click', takeSnapshot);
+        document.getElementById('startStream').addEventListener('click', startStream);
+        document.getElementById('stopStream').addEventListener('click', stopStream);
+        
+        async function fetchWithAuth(url, options = {}) {
+            const headers = {
+                'X-API-Key': API_KEY,
+                ...options.headers
+            };
+            
+            return fetch(url, { ...options, headers });
+        }
+        
+        async function listCameras() {
+            try {
+                const response = await fetchWithAuth(`${BASE_URL}/api/v1/cameras`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const cameraList = document.getElementById('cameraList');
+                    cameraList.innerHTML = '<h2>Available Cameras</h2>';
+                    
+                    const ul = document.createElement('ul');
+                    data.data.forEach(camera => {
+                        const li = document.createElement('li');
+                        li.textContent = `${camera.name} (${camera.position})`;
+                        
+                        const selectButton = document.createElement('button');
+                        selectButton.textContent = 'Select';
+                        selectButton.onclick = () => selectCamera(camera.id);
+                        li.appendChild(selectButton);
+                        
+                        ul.appendChild(li);
+                    });
+                    
+                    cameraList.appendChild(ul);
+                }
+            } catch (error) {
+                console.error('Error listing cameras:', error);
+            }
+        }
+        
+        async function selectCamera(cameraId) {
+            try {
+                const response = await fetchWithAuth(`${BASE_URL}/api/v1/cameras/select`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cameraId })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert('Camera selected successfully');
+                }
+            } catch (error) {
+                console.error('Error selecting camera:', error);
+            }
+        }
+        
+        async function takeSnapshot() {
+            try {
+                const response = await fetchWithAuth(`${BASE_URL}/api/v1/cameras/snapshot`);
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const imageUrl = URL.createObjectURL(blob);
+                    document.getElementById('cameraView').src = imageUrl;
+                }
+            } catch (error) {
+                console.error('Error taking snapshot:', error);
+            }
+        }
+        
+        async function startStream() {
+            try {
+                const response = await fetchWithAuth(`${BASE_URL}/api/v1/streams`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ quality: 'medium', frameRate: 15 })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    streamId = data.data.streamId;
+                    
+                    // Start fetching frames
+                    streamInterval = setInterval(fetchFrame, 100);
+                    
+                    console.log('Stream started with ID:', streamId);
+                }
+            } catch (error) {
+                console.error('Error starting stream:', error);
+            }
+        }
+        
+        async function stopStream() {
+            if (!streamId) return;
+            
+            try {
+                clearInterval(streamInterval);
+                
+                const response = await fetchWithAuth(`${BASE_URL}/api/v1/streams/${streamId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    console.log('Stream stopped');
+                    streamId = null;
+                }
+            } catch (error) {
+                console.error('Error stopping stream:', error);
+            }
+        }
+        
+        async function fetchFrame() {
+            if (!streamId) return;
+            
+            try {
+                const response = await fetchWithAuth(`${BASE_URL}/api/v1/streams/${streamId}/frame`);
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const imageUrl = URL.createObjectURL(blob);
+                    document.getElementById('cameraView').src = imageUrl;
+                }
+            } catch (error) {
+                console.error('Error fetching frame:', error);
+            }
+        }
+    </script>
+</body>
+</html> 

@@ -4,8 +4,15 @@ options:
   deploymentTarget:
     iOS: 15.0
 packages:
-  Nooku:
-    path: ..
+  Alamofire:
+    url: https://github.com/Alamofire/Alamofire.git
+    from: 5.8.1
+  CryptoSwift:
+    url: https://github.com/krzyzanowskim/CryptoSwift.git
+    from: 1.7.0
+  SwiftSSHClient:
+    url: https://github.com/gaetanzanella/swift-ssh-client.git
+    from: 0.1.4
 targets:
   NookuApp:
     type: application
@@ -25,5 +32,7 @@ targets:
         SUPPORTS_MACCATALYST: NO
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
     dependencies:
-      - package: Nooku
-        product: Nooku 
+      - package: Alamofire
+      - package: CryptoSwift
+      - package: SwiftSSHClient
+        product: SSHClient 

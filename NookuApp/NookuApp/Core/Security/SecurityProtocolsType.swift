@@ -1,7 +1,7 @@
 import Foundation
 
 /// Protocol for keychain operations
-protocol KeychainServiceProtocol {
+protocol KeychainServiceTypeProtocol {
     func save(value: String, for key: String) -> Bool
     func retrieveString(for key: String) -> String?
     func delete(key: String) -> Bool
@@ -10,7 +10,7 @@ protocol KeychainServiceProtocol {
 }
 
 /// Protocol for encryption operations
-protocol EncryptionServiceProtocol {
+protocol EncryptionServiceTypeProtocol {
     func encrypt(data: Data, with key: Data) -> Data?
     func decrypt(data: Data, with key: Data) -> Data?
     func generateKey() -> Data
@@ -22,6 +22,6 @@ protocol EncryptionServiceProtocol {
 }
 
 /// Protocol for jailbreak detection
-public protocol JailbreakDetectionServiceProtocol {
+public protocol JailbreakDetectionServiceTypeProtocol {
     func isJailbroken() -> Bool
 } 

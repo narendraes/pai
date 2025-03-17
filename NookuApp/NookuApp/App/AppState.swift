@@ -11,7 +11,7 @@ public class AppState: ObservableObject {
     @Published public var isConnected: Bool = false
     
     /// The current connection status
-    @Published public var connectionStatus: ConnectionStatus = .disconnected
+    @Published public var connectionStatus: ConnectionStatusType = .disconnected
     
     /// The currently selected tab
     @Published public var selectedTab: TabSelection = .chat
@@ -92,7 +92,7 @@ enum Screen {
     case settings
 }
 
-enum ConnectionStatus {
+enum ConnectionStatusType {
     case disconnected
     case connecting
     case connected

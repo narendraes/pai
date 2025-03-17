@@ -1,7 +1,7 @@
 import Foundation
 
 /// Network-related errors
-public enum NetworkError: LocalizedError {
+public enum NetworkErrorType: LocalizedError {
     case invalidURL
     case requestFailed(Error)
     case invalidResponse

@@ -10,7 +10,7 @@ class CleanupScheduler {
     static let shared = CleanupScheduler()
     
     private let taskIdentifier = "com.nooku.app.mediacleanup"
-    private let cameraManager = CameraManager()
+    private let mediaManager = MediaCleanupManager()
     
     private init() {}
     
@@ -40,7 +40,7 @@ class CleanupScheduler {
         
         // Create a task that performs the cleanup
         let cleanupOperation = BlockOperation {
-            self.cameraManager.cleanupOldMedia()
+            self.mediaManager.cleanupOldMedia()
         }
         
         // Set up a completion handler
@@ -68,7 +68,7 @@ class CleanupScheduler {
         if lastCleanupDate == nil || now.timeIntervalSince(lastCleanupDate!) > 7 * 24 * 60 * 60 {
             // Perform cleanup
             DispatchQueue.global(qos: .background).async {
-                self.cameraManager.cleanupOldMedia()
+                self.mediaManager.cleanupOldMedia()
                 
                 // Update the last cleanup date
                 DispatchQueue.main.async {
@@ -79,8 +79,8 @@ class CleanupScheduler {
     }
 }
 
-// Define CameraManager for CleanupScheduler
-class CameraManager {
+// Define MediaCleanupManager for CleanupScheduler
+class MediaCleanupManager {
     func cleanupOldMedia() {
         // Implementation for cleaning up old media
         print("Cleaning up old media...")

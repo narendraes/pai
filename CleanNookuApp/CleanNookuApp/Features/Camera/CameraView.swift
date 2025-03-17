@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import Combine
 
 // Define Camera model directly in this file
 struct Camera: Identifiable {

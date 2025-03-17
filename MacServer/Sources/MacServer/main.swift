@@ -1,7 +1,6 @@
 import Foundation
 import MacServerLib
 import Logging
-import Lifecycle
 
 // Configure logging
 LoggingSystem.bootstrap { label in
@@ -12,29 +11,6 @@ LoggingSystem.bootstrap { label in
 
 let logger = Logger(label: "com.nooku.macserver.main")
 logger.info("Starting Nooku Mac Server")
-
-// Create service lifecycle
-let lifecycle = ServiceLifecycle(configuration: .init(
-    shutdownSignal: .sigterm
-))
-
-// Add API server to lifecycle
-lifecycle.registerShutdown(
-    label: "API Server",
-    .sync { 
-        logger.info("Shutting down API server")
-        APIServer.shared.stop()
-    }
-)
-
-// Add SSH server to lifecycle
-lifecycle.registerShutdown(
-    label: "SSH Server",
-    .sync { 
-        logger.info("Shutting down SSH server")
-        SSHServer.shared.stop()
-    }
-)
 
 // Start servers
 logger.info("Starting API server")
@@ -58,10 +34,20 @@ logger.info("Nooku Mac Server is running")
 logger.info("API server: http://localhost:\(APIServer.shared.port)")
 logger.info("SSH server: ssh://localhost:\(SSHServer.shared.port)")
 
-// Start the lifecycle
-do {
-    try lifecycle.startAndWait()
-} catch {
-    logger.error("Service lifecycle error: \(error)")
-    exit(1)
-} 
+// Setup signal handling for graceful shutdown
+signal(SIGINT) { _ in
+    logger.info("Received interrupt signal, shutting down...")
+    APIServer.shared.stop()
+    SSHServer.shared.stop()
+    exit(0)
+}
+
+signal(SIGTERM) { _ in
+    logger.info("Received termination signal, shutting down...")
+    APIServer.shared.stop()
+    SSHServer.shared.stop()
+    exit(0)
+}
+
+// Keep the process running
+dispatchMain() 

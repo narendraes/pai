@@ -1,6 +1,9 @@
 import Foundation
 import AVFoundation
 import Logging
+import CoreImage
+import AppKit
+import Vapor
 
 /// Manages video streaming from the Mac camera
 public class StreamManager {
@@ -35,7 +38,7 @@ public class StreamManager {
         logger.info("Starting new stream with quality: \(quality), frameRate: \(frameRate)")
         
         // Ensure camera is running
-        guard CameraManager.shared.isRunning else {
+        if !CameraManager.shared.isRunning {
             if !CameraManager.shared.startSession() {
                 logger.error("Failed to start camera for streaming")
                 return nil
@@ -51,8 +54,8 @@ public class StreamManager {
         )
         
         // Subscribe to camera frames
-        let subscriptionId = CameraManager.shared.subscribeToFrames { [weak self, weak session] pixelBuffer in
-            guard let self = self, let session = session else { return }
+        let subscriptionId = CameraManager.shared.subscribeToFrames { [weak session] pixelBuffer in
+            guard let session = session else { return }
             session.processFrame(pixelBuffer)
         }
         
@@ -254,7 +257,7 @@ class StreamSession {
     private func setupFrameTimer() {
         frameTimer = DispatchSource.makeTimerSource(queue: DispatchQueue.global(qos: .userInteractive))
         frameTimer?.schedule(deadline: .now(), repeating: .milliseconds(1000 / targetFrameRate))
-        frameTimer?.setEventHandler { [weak self] in
+        frameTimer?.setEventHandler {
             // This timer ensures we maintain a consistent frame rate
             // The actual frame processing is done in processFrame
         }
@@ -265,7 +268,7 @@ class StreamSession {
 // MARK: - Stream Quality
 
 /// Quality levels for video streaming
-public enum StreamQuality: String, Codable {
+public enum StreamQuality: String, Codable, Sendable, Content {
     case low
     case medium
     case high
@@ -298,7 +301,7 @@ public enum StreamQuality: String, Codable {
 // MARK: - Stream Info
 
 /// Information about an active stream
-public struct StreamInfo: Codable {
+public struct StreamInfo: Codable, Content {
     public let id: UUID
     public let quality: StreamQuality
     public let frameRate: Int

@@ -1,9 +1,12 @@
 import Foundation
 import AVFoundation
 import Logging
+import CoreImage
+import AppKit
+import Vapor
 
 /// Manages camera access and streaming for the Mac server
-public class CameraManager {
+public class CameraManager: NSObject {
     // MARK: - Properties
     
     /// Shared singleton instance
@@ -35,7 +38,8 @@ public class CameraManager {
     
     // MARK: - Initialization
     
-    private init() {
+    private override init() {
+        super.init()
         logger.info("CameraManager initialized")
     }
     
@@ -272,7 +276,7 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
 
 // MARK: - Camera Info Struct
 
-public struct CameraInfo: Codable {
+public struct CameraInfo: Codable, Content {
     public let id: String
     public let name: String
     public let position: String

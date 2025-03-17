@@ -21,27 +21,190 @@ enum CameraType {
     case external // External IP camera
 }
 
+// Camera Preview View for showing webcam feed
+struct CameraPreviewView: UIViewRepresentable {
+    @ObservedObject var cameraManager: CameraManager
+    
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView(frame: UIScreen.main.bounds)
+        let previewLayer = AVCaptureVideoPreviewLayer(session: cameraManager.session)
+        previewLayer.frame = view.bounds
+        previewLayer.videoGravity = .resizeAspectFill
+        view.layer.addSublayer(previewLayer)
+        return view
+    }
+    
+    func updateUIView(_ uiView: UIView, context: Context) {}
+}
+
+// Camera Manager to handle webcam access
+class CameraManager: NSObject, ObservableObject {
+    @Published var isAuthorized = false
+    @Published var isSessionRunning = false
+    @Published var error: Error?
+    
+    let session = AVCaptureSession()
+    private var videoDeviceInput: AVCaptureDeviceInput?
+    
+    override init() {
+        super.init()
+        checkAuthorization()
+    }
+    
+    func checkAuthorization() {
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            self.isAuthorized = true
+            self.setupCaptureSession()
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                DispatchQueue.main.async {
+                    self.isAuthorized = granted
+                    if granted {
+                        self.setupCaptureSession()
+                    }
+                }
+            }
+        case .denied, .restricted:
+            self.isAuthorized = false
+        @unknown default:
+            self.isAuthorized = false
+        }
+    }
+    
+    private func setupCaptureSession() {
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                self.session.beginConfiguration()
+                
+                // Add video input
+                if let videoDevice = AVCaptureDevice.default(for: .video) {
+                    let videoDeviceInput = try AVCaptureDeviceInput(device: videoDevice)
+                    if self.session.canAddInput(videoDeviceInput) {
+                        self.session.addInput(videoDeviceInput)
+                        self.videoDeviceInput = videoDeviceInput
+                    }
+                }
+                
+                self.session.commitConfiguration()
+                self.startSession()
+                
+                DispatchQueue.main.async {
+                    self.isSessionRunning = true
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.error = error
+                }
+            }
+        }
+    }
+    
+    func startSession() {
+        if !session.isRunning {
+            DispatchQueue.global(qos: .userInitiated).async {
+                self.session.startRunning()
+                DispatchQueue.main.async {
+                    self.isSessionRunning = self.session.isRunning
+                }
+            }
+        }
+    }
+    
+    func stopSession() {
+        if session.isRunning {
+            DispatchQueue.global(qos: .userInitiated).async {
+                self.session.stopRunning()
+                DispatchQueue.main.async {
+                    self.isSessionRunning = self.session.isRunning
+                }
+            }
+        }
+    }
+    
+    func switchCamera() {
+        // Implementation for switching between front and back cameras
+        // (Not implemented for this simplified version)
+    }
+}
+
 // Define DeviceCameraView
 struct DeviceCameraView: View {
+    @StateObject private var cameraManager = CameraManager()
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
-        VStack {
-            Text("Device Camera")
-                .font(.title)
+        ZStack {
+            // Camera preview
+            if cameraManager.isAuthorized {
+                CameraPreviewView(cameraManager: cameraManager)
+                    .edgesIgnoringSafeArea(.all)
+                
+                // Camera controls overlay
+                VStack {
+                    HStack {
+                        Button(action: {
+                            presentationMode.wrappedValue.dismiss()
+                        }) {
+                            Image(systemName: "xmark")
+                                .font(.title)
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.black.opacity(0.6))
+                                .clipShape(Circle())
+                        }
+                        .padding(.leading)
+                        
+                        Spacer()
+                    }
+                    .padding(.top, 30)
+                    
+                    Spacer()
+                }
+            } else {
+                // Camera not authorized view
+                VStack(spacing: 20) {
+                    Image(systemName: "camera.slash.fill")
+                        .font(.system(size: 60))
+                    
+                    Text("Camera Access Required")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                    
+                    Text("Please allow camera access in System Settings to use this feature.")
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                    
+                    Button(action: {
+                        if let url = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(url)
+                        }
+                    }) {
+                        Text("Open Settings")
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 10)
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                    }
+                    .padding(.top)
+                    
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Text("Cancel")
+                            .foregroundColor(.blue)
+                    }
+                    .padding(.top, 10)
+                }
                 .padding()
-            
-            Spacer()
-            
-            Text("Camera functionality placeholder")
-                .foregroundColor(.gray)
-            
-            Spacer()
-            
-            Button("Close") {
-                presentationMode.wrappedValue.dismiss()
             }
-            .padding()
+        }
+        .onAppear {
+            cameraManager.checkAuthorization()
+        }
+        .onDisappear {
+            cameraManager.stopSession()
         }
     }
 }
@@ -76,10 +239,10 @@ struct CameraView: View {
     
     // Sample camera data
     private let cameras = [
-        Camera(id: "front_door", name: "Front Door", isOnline: true),
-        Camera(id: "back_yard", name: "Back Yard", isOnline: true),
+        Camera(id: "front_door", name: "Front Door", isOnline: false),
+        Camera(id: "back_yard", name: "Back Yard", isOnline: false),
         Camera(id: "garage", name: "Garage", isOnline: false),
-        Camera(id: "living_room", name: "Living Room", isOnline: true)
+        Camera(id: "living_room", name: "Living Room", isOnline: false)
     ]
     
     @State private var selectedCamera: Camera?
@@ -110,7 +273,7 @@ struct CameraView: View {
                 }) {
                     HStack {
                         Image(systemName: "camera.fill")
-                        Text("Device Camera")
+                        Text("Webcam")
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
@@ -128,16 +291,23 @@ struct CameraView: View {
                     self.selectedCamera = nil
                 }
             } else {
-                // Show camera list
-                List {
-                    ForEach(cameras) { camera in
-                        CameraListItem(camera: camera)
-                            .onTapGesture {
-                                selectedCamera = camera
-                            }
+                // Show camera list with disabled cameras
+                VStack {
+                    List {
+                        ForEach(cameras) { camera in
+                            CameraListItem(camera: camera)
+                                .onTapGesture {
+                                    // Disabled for now
+                                }
+                        }
                     }
+                    .listStyle(InsetGroupedListStyle())
+                    
+                    Text("External cameras are currently disabled")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .padding(.bottom)
                 }
-                .listStyle(InsetGroupedListStyle())
             }
         }
         .sheet(isPresented: $showDeviceCamera) {

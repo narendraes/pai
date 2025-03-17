@@ -1,6 +1,7 @@
 import SwiftUI
 import AVFoundation
 import Combine
+import UIKit
 
 // Define Camera model directly in this file
 struct Camera: Identifiable {
@@ -372,6 +373,7 @@ struct CameraView: View {
     @State private var selectedCamera: Camera?
     @State private var showDeviceCamera = false
     @State private var showMediaLibrary = false
+    @State private var showMacCamera = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -389,6 +391,21 @@ struct CameraView: View {
                     Image(systemName: "photo.on.rectangle")
                         .font(.title2)
                         .foregroundColor(.blue)
+                }
+                .padding(.trailing, 8)
+                
+                Button(action: {
+                    showMacCamera = true
+                }) {
+                    HStack {
+                        Image(systemName: "laptopcomputer")
+                        Text("Mac")
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.purple)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
                 }
                 .padding(.trailing, 8)
                 
@@ -439,6 +456,9 @@ struct CameraView: View {
         }
         .sheet(isPresented: $showMediaLibrary) {
             MediaLibraryView()
+        }
+        .sheet(isPresented: $showMacCamera) {
+            MacCameraView()
         }
     }
 }
@@ -643,4 +663,221 @@ struct CameraView_Previews: PreviewProvider {
         CameraView()
             .environmentObject(AppState())
     }
+}
+
+// Simple MacCameraView implementation
+struct MacCameraView: View {
+    @ObservedObject private var macClient = MacServerClient.shared
+    @State private var selectedCameraId: String?
+    @Environment(\.presentationMode) private var presentationMode
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                Text("Mac Camera")
+                    .font(.title)
+                    .padding()
+                
+                if macClient.isConnected {
+                    if let image = macClient.currentImage {
+                        Image(uiImage: image)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .padding()
+                    } else {
+                        Text("No camera preview available")
+                            .foregroundColor(.gray)
+                    }
+                    
+                    Button("Take Photo") {
+                        macClient.takeSnapshot()
+                            .sink(
+                                receiveCompletion: { _ in
+                                    presentationMode.wrappedValue.dismiss()
+                                },
+                                receiveValue: { _ in }
+                            )
+                            .store(in: &macClient.cancellables)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .padding()
+                } else {
+                    Text("Not connected to Mac server")
+                        .foregroundColor(.red)
+                        .padding()
+                    
+                    Button("Connect") {
+                        checkConnection()
+                    }
+                    .buttonStyle(.bordered)
+                }
+                
+                Spacer()
+            }
+            .navigationBarItems(leading: Button("Close") {
+                presentationMode.wrappedValue.dismiss()
+            })
+            .onAppear {
+                checkConnection()
+            }
+        }
+    }
+    
+    private func checkConnection() {
+        macClient.checkConnection()
+            .sink(
+                receiveCompletion: { _ in
+                    if macClient.isConnected {
+                        refreshCameras()
+                    }
+                },
+                receiveValue: { _ in }
+            )
+            .store(in: &macClient.cancellables)
+    }
+    
+    private func refreshCameras() {
+        macClient.listCameras()
+            .sink(
+                receiveCompletion: { _ in },
+                receiveValue: { cameras in
+                    if let firstCamera = cameras.first {
+                        selectCamera(firstCamera.id)
+                    }
+                }
+            )
+            .store(in: &macClient.cancellables)
+    }
+    
+    private func selectCamera(_ cameraId: String) {
+        macClient.selectCamera(cameraId: cameraId)
+            .sink(
+                receiveCompletion: { _ in },
+                receiveValue: { success in
+                    if success {
+                        selectedCameraId = cameraId
+                        macClient.takeSnapshot()
+                            .sink(
+                                receiveCompletion: { _ in },
+                                receiveValue: { _ in }
+                            )
+                            .store(in: &macClient.cancellables)
+                    }
+                }
+            )
+            .store(in: &macClient.cancellables)
+    }
+}
+
+// Basic MacServerClient implementation for Mac camera access
+class MacServerClient: ObservableObject {
+    // MARK: - Properties
+    static let shared = MacServerClient()
+    
+    @Published var isConnected = false
+    @Published var availableCameras: [MacCamera] = []
+    @Published var currentImage: UIImage?
+    @Published var error: Error?
+    
+    var cancellables = Set<AnyCancellable>()
+    
+    private var serverURL = URL(string: "http://localhost:8080")!
+    private var apiKey = "test-api-key"
+    private let session = URLSession.shared
+    
+    // MARK: - Public Methods
+    func checkConnection() -> AnyPublisher<Bool, Error> {
+        let url = serverURL.appendingPathComponent("health")
+        
+        return session.dataTaskPublisher(for: url)
+            .tryMap { data, response -> Bool in
+                guard let httpResponse = response as? HTTPURLResponse,
+                      httpResponse.statusCode == 200 else {
+                    throw URLError(.cannotConnectToHost)
+                }
+                return true
+            }
+            .receive(on: DispatchQueue.main)
+            .handleEvents(receiveOutput: { [weak self] isConnected in
+                self?.isConnected = isConnected
+            })
+            .eraseToAnyPublisher()
+    }
+    
+    func listCameras() -> AnyPublisher<[MacCamera], Error> {
+        let url = serverURL.appendingPathComponent("api/v1/cameras")
+        var request = URLRequest(url: url)
+        request.addValue(apiKey, forHTTPHeaderField: "X-API-Key")
+        
+        return session.dataTaskPublisher(for: request)
+            .tryMap { data, response -> Data in
+                guard let httpResponse = response as? HTTPURLResponse,
+                      httpResponse.statusCode == 200 else {
+                    throw URLError(.badServerResponse)
+                }
+                return data
+            }
+            .decode(type: CameraListResponse.self, decoder: JSONDecoder())
+            .map { $0.data }
+            .receive(on: DispatchQueue.main)
+            .handleEvents(receiveOutput: { [weak self] cameras in
+                self?.availableCameras = cameras
+            })
+            .eraseToAnyPublisher()
+    }
+    
+    func selectCamera(cameraId: String) -> AnyPublisher<Bool, Error> {
+        let url = serverURL.appendingPathComponent("api/v1/cameras/select")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue(apiKey, forHTTPHeaderField: "X-API-Key")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body = ["cameraId": cameraId]
+        request.httpBody = try? JSONEncoder().encode(body)
+        
+        return session.dataTaskPublisher(for: request)
+            .tryMap { data, response -> Bool in
+                guard let httpResponse = response as? HTTPURLResponse,
+                      httpResponse.statusCode == 200 else {
+                    throw URLError(.badServerResponse)
+                }
+                return true
+            }
+            .receive(on: DispatchQueue.main)
+            .eraseToAnyPublisher()
+    }
+    
+    func takeSnapshot() -> AnyPublisher<UIImage, Error> {
+        let url = serverURL.appendingPathComponent("api/v1/cameras/snapshot")
+        var request = URLRequest(url: url)
+        request.addValue(apiKey, forHTTPHeaderField: "X-API-Key")
+        
+        return session.dataTaskPublisher(for: request)
+            .tryMap { data, response -> UIImage in
+                guard let httpResponse = response as? HTTPURLResponse,
+                      httpResponse.statusCode == 200,
+                      let image = UIImage(data: data) else {
+                    throw URLError(.badServerResponse)
+                }
+                return image
+            }
+            .receive(on: DispatchQueue.main)
+            .handleEvents(receiveOutput: { [weak self] image in
+                self?.currentImage = image
+            })
+            .eraseToAnyPublisher()
+    }
+}
+
+// Models needed for MacServerClient
+struct MacCamera: Identifiable, Codable {
+    let id: String
+    let name: String
+    let position: String
+}
+
+struct CameraListResponse: Codable {
+    let success: Bool
+    let data: [MacCamera]
 }

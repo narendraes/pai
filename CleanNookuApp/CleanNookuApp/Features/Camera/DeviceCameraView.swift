@@ -21,82 +21,68 @@ struct DeviceCameraView: View {
                 
                 // Camera controls overlay
                 VStack {
-                    // Top controls
                     HStack {
                         Button(action: {
                             presentationMode.wrappedValue.dismiss()
                         }) {
                             Image(systemName: "xmark")
-                                .font(.title2)
+                                .font(.title)
                                 .foregroundColor(.white)
                                 .padding()
-                                .background(Color.black.opacity(0.5))
+                                .background(Color.black.opacity(0.6))
                                 .clipShape(Circle())
                         }
+                        .padding(.leading)
                         
                         Spacer()
                         
-                        // Flash control
                         Button(action: {
-                            switch cameraManager.flashMode {
-                            case .off:
-                                cameraManager.setFlashMode(.on)
-                            case .on:
-                                cameraManager.setFlashMode(.auto)
-                            case .auto:
-                                cameraManager.setFlashMode(.off)
-                            @unknown default:
-                                cameraManager.setFlashMode(.off)
-                            }
+                            showCameraSettings = true
                         }) {
-                            Image(systemName: flashIcon)
-                                .font(.title2)
+                            Image(systemName: "gear")
+                                .font(.title)
                                 .foregroundColor(.white)
                                 .padding()
-                                .background(Color.black.opacity(0.5))
+                                .background(Color.black.opacity(0.6))
                                 .clipShape(Circle())
                         }
+                        .padding(.trailing)
                     }
-                    .padding()
+                    .padding(.top, 30)
                     
                     Spacer()
                     
                     // Bottom controls
-                    HStack(spacing: 50) {
-                        // Switch camera
-                        CameraControlButton(
-                            systemName: "arrow.triangle.2.circlepath.camera",
-                            action: {
-                                cameraManager.switchCamera()
-                            }
-                        )
+                    HStack(spacing: 30) {
+                        Spacer()
                         
-                        // Capture button
-                        CaptureButton(
-                            action: {
-                                if cameraManager.isRecording {
-                                    cameraManager.stopRecording()
-                                } else {
-                                    if cameraManager.isSessionRunning {
-                                        cameraManager.capturePhoto()
-                                    }
-                                }
-                            },
-                            isRecording: cameraManager.isRecording
-                        )
+                        // Photo button
+                        Button(action: {
+                            cameraManager.capturePhoto()
+                        }) {
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 70, height: 70)
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.white, lineWidth: 3)
+                                        .frame(width: 60, height: 60)
+                                )
+                        }
                         
-                        // Record video
-                        CameraControlButton(
-                            systemName: cameraManager.isRecording ? "stop.circle.fill" : "video.circle.fill",
-                            action: {
-                                if cameraManager.isRecording {
-                                    cameraManager.stopRecording()
-                                } else {
-                                    cameraManager.startRecording()
-                                }
-                            },
-                            color: cameraManager.isRecording ? .red : .white
-                        )
+                        // Switch camera button
+                        Button(action: {
+                            cameraManager.switchCamera()
+                        }) {
+                            Image(systemName: "arrow.triangle.2.circlepath.camera")
+                                .font(.system(size: 24))
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.black.opacity(0.6))
+                                .clipShape(Circle())
+                        }
+                        
+                        Spacer()
                     }
                     .padding(.bottom, 30)
                 }
@@ -118,39 +104,41 @@ struct DeviceCameraView: View {
                 // Camera not authorized view
                 VStack(spacing: 20) {
                     Image(systemName: "camera.slash.fill")
-                        .font(.system(size: 70))
-                        .foregroundColor(.gray)
+                        .font(.system(size: 60))
                     
                     Text("Camera Access Required")
                         .font(.title2)
                         .fontWeight(.bold)
                     
-                    Text("Please allow access to your camera to use this feature.")
+                    Text("Please allow camera access in Settings to use this feature.")
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                     
-                    Button("Open Settings") {
-                        if let url = URL(string: UIApplication.openSettingsURLString) {
-                            UIApplication.shared.open(url)
-                        }
+                    Button(action: {
+                        showPermissionAlert = true
+                    }) {
+                        Text("Open Settings")
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 10)
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
                     }
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+                    .padding(.top)
+                    
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Text("Cancel")
+                            .foregroundColor(.blue)
+                    }
+                    .padding(.top, 10)
                 }
                 .padding()
             }
         }
         .onAppear {
-            // Start camera session when view appears
-            if cameraManager.isAuthorized {
-                cameraManager.startSession()
-            }
-        }
-        .onDisappear {
-            // Stop camera session when view disappears
-            cameraManager.stopSession()
+            cameraManager.checkAuthorization()
         }
         .onChange(of: cameraManager.currentImage) { newImage in
             // Show photo preview when a new image is captured
@@ -173,13 +161,13 @@ struct DeviceCameraView: View {
         }
         .alert(isPresented: $showPermissionAlert) {
             Alert(
-                title: Text("Permission Required"),
-                message: Text(cameraManager.error?.localizedDescription ?? "Camera access is required to use this feature."),
-                primaryButton: .default(Text("Settings")) {
+                title: Text("Camera Access Required"),
+                message: Text("Please allow camera access in Settings to use this feature."),
+                primaryButton: .default(Text("Open Settings"), action: {
                     if let url = URL(string: UIApplication.openSettingsURLString) {
                         UIApplication.shared.open(url)
                     }
-                },
+                }),
                 secondaryButton: .cancel()
             )
         }
@@ -210,19 +198,8 @@ struct DeviceCameraView: View {
                 ]
             )
         }
-    }
-    
-    // Helper to determine flash icon
-    private var flashIcon: String {
-        switch cameraManager.flashMode {
-        case .on:
-            return "bolt.fill"
-        case .off:
-            return "bolt.slash.fill"
-        case .auto:
-            return "bolt.badge.a.fill"
-        @unknown default:
-            return "bolt.slash.fill"
+        .sheet(isPresented: $showCameraSettings) {
+            CameraSettingsView()
         }
     }
 }

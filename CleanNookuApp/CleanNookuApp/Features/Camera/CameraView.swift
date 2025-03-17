@@ -14,6 +14,7 @@ struct CameraView: View {
     
     @State private var selectedCamera: Camera?
     @State private var showDeviceCamera = false
+    @State private var showMediaLibrary = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -24,6 +25,15 @@ struct CameraView: View {
                     .fontWeight(.bold)
                 
                 Spacer()
+                
+                Button(action: {
+                    showMediaLibrary = true
+                }) {
+                    Image(systemName: "photo.on.rectangle")
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                }
+                .padding(.trailing, 8)
                 
                 Button(action: {
                     showDeviceCamera = true
@@ -62,6 +72,9 @@ struct CameraView: View {
         }
         .sheet(isPresented: $showDeviceCamera) {
             DeviceCameraView()
+        }
+        .sheet(isPresented: $showMediaLibrary) {
+            MediaLibraryView()
         }
     }
 }

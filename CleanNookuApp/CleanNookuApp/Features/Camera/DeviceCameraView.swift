@@ -8,6 +8,9 @@ struct DeviceCameraView: View {
     @State private var showPhotoPreview = false
     @State private var showCameraSettings = false
     @State private var showPermissionAlert = false
+    @State private var showMediaSavedAlert = false
+    @State private var showSaveToPhotosConfirm = false
+    @State private var mediaAlertMessage = ""
     
     var body: some View {
         ZStack {
@@ -107,9 +110,7 @@ struct DeviceCameraView: View {
                             cameraManager.currentImage = nil
                         },
                         onSave: {
-                            // Image is already saved by the CameraManager
-                            showPhotoPreview = false
-                            cameraManager.currentImage = nil
+                            showSaveToPhotosConfirm = true
                         }
                     )
                 }
@@ -157,6 +158,13 @@ struct DeviceCameraView: View {
                 showPhotoPreview = true
             }
         }
+        .onChange(of: cameraManager.lastSavedMediaURL) { url in
+            if let url = url, let mediaType = cameraManager.lastSavedMediaType {
+                let mediaTypeString = mediaType == .photo ? "Photo" : "Video"
+                mediaAlertMessage = "\(mediaTypeString) saved to app storage"
+                showMediaSavedAlert = true
+            }
+        }
         .onChange(of: cameraManager.error) { error in
             if error != nil {
                 // Handle camera errors
@@ -173,6 +181,33 @@ struct DeviceCameraView: View {
                     }
                 },
                 secondaryButton: .cancel()
+            )
+        }
+        .alert(isPresented: $showMediaSavedAlert) {
+            Alert(
+                title: Text("Media Saved"),
+                message: Text(mediaAlertMessage),
+                dismissButton: .default(Text("OK"))
+            )
+        }
+        .actionSheet(isPresented: $showSaveToPhotosConfirm) {
+            ActionSheet(
+                title: Text("Save to Photos Library?"),
+                message: Text("This media is already saved in the app. Do you want to save it to your Photos library as well?"),
+                buttons: [
+                    .default(Text("Save to Photos")) {
+                        if let mediaType = cameraManager.lastSavedMediaType {
+                            if mediaType == .photo {
+                                cameraManager.saveCurrentImageToPhotos()
+                            } else if mediaType == .video, let url = cameraManager.lastSavedMediaURL {
+                                cameraManager.saveVideoToPhotos(from: url)
+                            }
+                            mediaAlertMessage = "Media saved to Photos library"
+                            showMediaSavedAlert = true
+                        }
+                    },
+                    .cancel()
+                ]
             )
         }
     }

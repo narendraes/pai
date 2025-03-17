@@ -11,6 +11,8 @@ class CameraManager: NSObject, ObservableObject {
     @Published var error: CameraError?
     @Published var flashMode: AVCaptureDevice.FlashMode = .off
     @Published var isRecording = false
+    @Published var lastSavedMediaURL: URL?
+    @Published var lastSavedMediaType: MediaType?
     
     // Camera configuration
     private let session = AVCaptureSession()
@@ -26,6 +28,67 @@ class CameraManager: NSObject, ObservableObject {
     private var tempVideoURL: URL {
         let tempDir = FileManager.default.temporaryDirectory
         return tempDir.appendingPathComponent("temp_video_\(Date().timeIntervalSince1970).mov")
+    }
+    
+    // App storage directory for media
+    private var mediaDirectory: URL? {
+        let fileManager = FileManager.default
+        guard let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            return nil
+        }
+        
+        let mediaDirectory = documentsDirectory.appendingPathComponent("NookuMedia", isDirectory: true)
+        
+        // Create directory if it doesn't exist
+        if !fileManager.fileExists(atPath: mediaDirectory.path) {
+            do {
+                try fileManager.createDirectory(at: mediaDirectory, withIntermediateDirectories: true)
+                return mediaDirectory
+            } catch {
+                self.error = .fileSystemError(error)
+                return nil
+            }
+        }
+        
+        return mediaDirectory
+    }
+    
+    // Photo storage directory
+    private var photosDirectory: URL? {
+        guard let mediaDir = mediaDirectory else { return nil }
+        let photosDir = mediaDir.appendingPathComponent("Photos", isDirectory: true)
+        
+        // Create directory if it doesn't exist
+        if !FileManager.default.fileExists(atPath: photosDir.path) {
+            do {
+                try FileManager.default.createDirectory(at: photosDir, withIntermediateDirectories: true)
+                return photosDir
+            } catch {
+                self.error = .fileSystemError(error)
+                return nil
+            }
+        }
+        
+        return photosDir
+    }
+    
+    // Video storage directory
+    private var videosDirectory: URL? {
+        guard let mediaDir = mediaDirectory else { return nil }
+        let videosDir = mediaDir.appendingPathComponent("Videos", isDirectory: true)
+        
+        // Create directory if it doesn't exist
+        if !FileManager.default.fileExists(atPath: videosDir.path) {
+            do {
+                try FileManager.default.createDirectory(at: videosDir, withIntermediateDirectories: true)
+                return videosDir
+            } catch {
+                self.error = .fileSystemError(error)
+                return nil
+            }
+        }
+        
+        return videosDir
     }
     
     override init() {
@@ -228,6 +291,147 @@ class CameraManager: NSObject, ObservableObject {
         videoOutput.stopRecording()
     }
     
+    // MARK: - Media Management
+    
+    // Save image to app storage
+    private func saveImageToAppStorage(_ image: UIImage) -> URL? {
+        guard let photosDir = photosDirectory else {
+            self.error = .fileSystemError(nil)
+            return nil
+        }
+        
+        let fileName = "photo_\(Date().timeIntervalSince1970).jpg"
+        let fileURL = photosDir.appendingPathComponent(fileName)
+        
+        guard let imageData = image.jpegData(compressionQuality: 0.9) else {
+            self.error = .invalidPhotoData
+            return nil
+        }
+        
+        do {
+            try imageData.write(to: fileURL)
+            return fileURL
+        } catch {
+            self.error = .savePhoto(error)
+            return nil
+        }
+    }
+    
+    // Save video to app storage
+    private func saveVideoToAppStorage(from tempURL: URL) -> URL? {
+        guard let videosDir = videosDirectory else {
+            self.error = .fileSystemError(nil)
+            return nil
+        }
+        
+        let fileName = "video_\(Date().timeIntervalSince1970).mov"
+        let fileURL = videosDir.appendingPathComponent(fileName)
+        
+        do {
+            if FileManager.default.fileExists(atPath: fileURL.path) {
+                try FileManager.default.removeItem(at: fileURL)
+            }
+            
+            try FileManager.default.copyItem(at: tempURL, to: fileURL)
+            return fileURL
+        } catch {
+            self.error = .saveVideo(error)
+            return nil
+        }
+    }
+    
+    // Save current image to Photos library
+    func saveCurrentImageToPhotos() {
+        guard let image = currentImage else { return }
+        
+        UIImageWriteToSavedPhotosAlbum(image, self, #selector(image(_:didFinishSavingWithError:contextInfo:)), nil)
+    }
+    
+    // Save video to Photos library
+    func saveVideoToPhotos(from url: URL) {
+        UISaveVideoAtPathToSavedPhotosAlbum(
+            url.path,
+            self,
+            #selector(self.video(_:didFinishSavingWithError:contextInfo:)),
+            nil
+        )
+    }
+    
+    // Get all saved photos
+    func getAllPhotos() -> [URL] {
+        guard let photosDir = photosDirectory else { return [] }
+        
+        do {
+            let fileURLs = try FileManager.default.contentsOfDirectory(
+                at: photosDir,
+                includingPropertiesForKeys: nil
+            )
+            return fileURLs.filter { $0.pathExtension.lowercased() == "jpg" || $0.pathExtension.lowercased() == "jpeg" }
+        } catch {
+            self.error = .fileSystemError(error)
+            return []
+        }
+    }
+    
+    // Get all saved videos
+    func getAllVideos() -> [URL] {
+        guard let videosDir = videosDirectory else { return [] }
+        
+        do {
+            let fileURLs = try FileManager.default.contentsOfDirectory(
+                at: videosDir,
+                includingPropertiesForKeys: nil
+            )
+            return fileURLs.filter { $0.pathExtension.lowercased() == "mov" || $0.pathExtension.lowercased() == "mp4" }
+        } catch {
+            self.error = .fileSystemError(error)
+            return []
+        }
+    }
+    
+    // Delete a media file
+    func deleteMedia(at url: URL) -> Bool {
+        do {
+            try FileManager.default.removeItem(at: url)
+            return true
+        } catch {
+            self.error = .fileSystemError(error)
+            return false
+        }
+    }
+    
+    // Clean up old media files (older than one week)
+    func cleanupOldMedia() {
+        let oneWeekAgo = Date().addingTimeInterval(-7 * 24 * 60 * 60) // 7 days
+        
+        // Clean photos
+        cleanDirectory(photosDirectory, olderThan: oneWeekAgo)
+        
+        // Clean videos
+        cleanDirectory(videosDirectory, olderThan: oneWeekAgo)
+    }
+    
+    private func cleanDirectory(_ directory: URL?, olderThan date: Date) {
+        guard let directory = directory else { return }
+        
+        do {
+            let fileURLs = try FileManager.default.contentsOfDirectory(
+                at: directory,
+                includingPropertiesForKeys: [.creationDateKey]
+            )
+            
+            for fileURL in fileURLs {
+                if let attributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path),
+                   let creationDate = attributes[.creationDate] as? Date,
+                   creationDate < date {
+                    try? FileManager.default.removeItem(at: fileURL)
+                }
+            }
+        } catch {
+            self.error = .fileSystemError(error)
+        }
+    }
+    
     // MARK: - Preview Layer
     
     func setPreviewLayer(for view: UIView) {
@@ -266,8 +470,11 @@ extension CameraManager: AVCapturePhotoCaptureDelegate {
         
         self.currentImage = image
         
-        // Save to photo library if needed
-        UIImageWriteToSavedPhotosAlbum(image, self, #selector(image(_:didFinishSavingWithError:contextInfo:)), nil)
+        // Save to app storage
+        if let savedURL = saveImageToAppStorage(image) {
+            self.lastSavedMediaURL = savedURL
+            self.lastSavedMediaType = .photo
+        }
     }
     
     @objc func image(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
@@ -295,13 +502,11 @@ extension CameraManager: AVCaptureFileOutputRecordingDelegate {
                 return
             }
             
-            // Save video to photo library
-            UISaveVideoAtPathToSavedPhotosAlbum(
-                outputFileURL.path,
-                self,
-                #selector(self.video(_:didFinishSavingWithError:contextInfo:)),
-                nil
-            )
+            // Save to app storage
+            if let savedURL = self.saveVideoToAppStorage(from: outputFileURL) {
+                self.lastSavedMediaURL = savedURL
+                self.lastSavedMediaType = .video
+            }
         }
     }
     
@@ -310,6 +515,13 @@ extension CameraManager: AVCaptureFileOutputRecordingDelegate {
             self.error = .saveVideo(error)
         }
     }
+}
+
+// MARK: - Media Type Enum
+
+enum MediaType {
+    case photo
+    case video
 }
 
 // MARK: - Error Types
@@ -325,6 +537,7 @@ enum CameraError: Error, Identifiable {
     case recordVideo(Error)
     case saveVideo(Error)
     case microphonePermissionDenied
+    case fileSystemError(Error?)
     case unknown
     
     var id: String { localizedDescription }
@@ -351,6 +564,11 @@ enum CameraError: Error, Identifiable {
             return "Error saving video: \(error.localizedDescription)"
         case .microphonePermissionDenied:
             return "Microphone access not authorized"
+        case .fileSystemError(let error):
+            if let error = error {
+                return "File system error: \(error.localizedDescription)"
+            }
+            return "File system error"
         case .unknown:
             return "Unknown camera error"
         }

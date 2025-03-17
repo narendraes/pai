@@ -4,6 +4,11 @@ import SwiftUI
 struct NookuApp: App {
     @StateObject private var appState = AppState()
     
+    init() {
+        // Register background tasks
+        CleanupScheduler.shared.registerBackgroundTask()
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -12,6 +17,14 @@ struct NookuApp: App {
                     // Check for jailbreak
                     if JailbreakDetectionService.shared.isJailbroken() {
                         appState.showJailbreakAlert = true
+                    }
+                    
+                    // Schedule media cleanup
+                    CleanupScheduler.shared.scheduleCleanup()
+                    
+                    // Check if cleanup is needed when app becomes active
+                    NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
+                        CleanupScheduler.shared.cleanupOnAppActive()
                     }
                 }
                 .alert("Security Warning", isPresented: $appState.showJailbreakAlert) {

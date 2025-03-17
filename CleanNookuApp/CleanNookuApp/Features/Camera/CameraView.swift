@@ -100,6 +100,13 @@ class CameraManager: NSObject, ObservableObject {
             do {
                 self.session.beginConfiguration()
                 
+                // Check if running in simulator
+                #if targetEnvironment(simulator)
+                print("Running in simulator - camera not available")
+                DispatchQueue.main.async {
+                    self.error = NSError(domain: "CameraManager", code: 3, userInfo: [NSLocalizedDescriptionKey: "Camera not available in simulator. Please run on a physical device."])
+                }
+                #else
                 // Add video input
                 if let videoDevice = AVCaptureDevice.default(for: .video) {
                     print("Found video device: \(videoDevice.localizedName)")
@@ -117,12 +124,19 @@ class CameraManager: NSObject, ObservableObject {
                 } else {
                     print("No video device found")
                     DispatchQueue.main.async {
-                        self.error = NSError(domain: "CameraManager", code: 2, userInfo: [NSLocalizedDescriptionKey: "No video device found"])
+                        self.error = NSError(domain: "CameraManager", code: 2, userInfo: [NSLocalizedDescriptionKey: "No video device found. Please check your device's camera."])
                     }
                 }
+                #endif
                 
                 self.session.commitConfiguration()
-                self.startSession()
+                
+                // Only start session if not in simulator and no error
+                #if !targetEnvironment(simulator)
+                if self.error == nil {
+                    self.startSession()
+                }
+                #endif
                 
             } catch {
                 print("Error setting up capture session: \(error.localizedDescription)")
@@ -258,6 +272,14 @@ struct ErrorView: View {
             Text(errorMessage)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
+            
+            #if targetEnvironment(simulator)
+            Text("Note: Camera functionality requires a physical device.")
+                .font(.caption)
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+            #endif
             
             Button(action: onClose) {
                 Text("Close")

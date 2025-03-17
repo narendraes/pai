@@ -1,10 +1,8 @@
 import SwiftUI
+import AVFoundation
 
 struct CameraView: View {
     @EnvironmentObject var appState: AppState
-    @State private var selectedCamera = 0
-    @State private var isRecording = false
-    @State private var showSettings = false
     
     // Sample camera data
     private let cameras = [
@@ -14,217 +12,227 @@ struct CameraView: View {
         Camera(id: "living_room", name: "Living Room", isOnline: true)
     ]
     
+    @State private var selectedCamera: Camera?
+    @State private var showDeviceCamera = false
+    
     var body: some View {
         VStack(spacing: 0) {
-            // Camera selector
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 15) {
-                    ForEach(0..<cameras.count, id: \.self) { index in
-                        CameraButton(
-                            camera: cameras[index],
-                            isSelected: selectedCamera == index
-                        ) {
-                            selectedCamera = index
-                        }
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 10)
-            }
-            .background(Color(.systemGray6))
-            
-            // Camera feed
-            ZStack {
-                // Camera placeholder
-                Rectangle()
-                    .fill(Color.black)
+            // Header with device camera button
+            HStack {
+                Text("Cameras")
+                    .font(.title)
+                    .fontWeight(.bold)
                 
-                VStack {
-                    // Camera name and status
+                Spacer()
+                
+                Button(action: {
+                    showDeviceCamera = true
+                }) {
                     HStack {
-                        Text(cameras[selectedCamera].name)
-                            .font(.headline)
-                            .foregroundColor(.white)
-                        
-                        Circle()
-                            .fill(cameras[selectedCamera].isOnline ? Color.green : Color.red)
-                            .frame(width: 8, height: 8)
-                        
-                        Text(cameras[selectedCamera].isOnline ? "Online" : "Offline")
-                            .font(.caption)
-                            .foregroundColor(.white)
-                        
-                        Spacer()
-                        
-                        Button(action: {
-                            showSettings.toggle()
-                        }) {
-                            Image(systemName: "gear")
-                                .foregroundColor(.white)
-                        }
+                        Image(systemName: "camera.fill")
+                        Text("Device Camera")
                     }
-                    .padding()
-                    .background(Color.black.opacity(0.5))
-                    
-                    Spacer()
-                    
-                    // If camera is offline
-                    if !cameras[selectedCamera].isOnline {
-                        Text("Camera Offline")
-                            .font(.title)
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(Color.black.opacity(0.7))
-                            .cornerRadius(10)
-                    }
-                    
-                    Spacer()
-                    
-                    // Camera controls
-                    HStack(spacing: 30) {
-                        Button(action: {
-                            // Take snapshot
-                        }) {
-                            VStack {
-                                Image(systemName: "camera")
-                                    .font(.system(size: 24))
-                                Text("Snapshot")
-                                    .font(.caption)
-                            }
-                            .foregroundColor(.white)
-                        }
-                        
-                        Button(action: {
-                            isRecording.toggle()
-                        }) {
-                            VStack {
-                                Image(systemName: isRecording ? "stop.circle" : "record.circle")
-                                    .font(.system(size: 24))
-                                    .foregroundColor(isRecording ? .red : .white)
-                                Text(isRecording ? "Stop" : "Record")
-                                    .font(.caption)
-                            }
-                            .foregroundColor(.white)
-                        }
-                        .disabled(!cameras[selectedCamera].isOnline)
-                        
-                        Button(action: {
-                            // Toggle audio
-                        }) {
-                            VStack {
-                                Image(systemName: "speaker.wave.2")
-                                    .font(.system(size: 24))
-                                Text("Audio")
-                                    .font(.caption)
-                            }
-                            .foregroundColor(.white)
-                        }
-                        .disabled(!cameras[selectedCamera].isOnline)
-                    }
-                    .padding()
-                    .background(Color.black.opacity(0.5))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding()
             
-            // Connection status
-            if !appState.isConnected {
-                HStack {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.orange)
-                    Text("Not connected to server")
-                        .font(.caption)
-                    Spacer()
-                    Button("Connect") {
-                        appState.connect()
-                    }
-                    .font(.caption)
-                    .buttonStyle(.bordered)
+            // Camera list
+            if let selectedCamera = selectedCamera {
+                // Show selected camera detail
+                CameraDetailView(camera: selectedCamera) {
+                    self.selectedCamera = nil
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 8)
-                .background(Color(.systemGray6))
+            } else {
+                // Show camera list
+                List {
+                    ForEach(cameras) { camera in
+                        CameraListItem(camera: camera)
+                            .onTapGesture {
+                                selectedCamera = camera
+                            }
+                    }
+                }
+                .listStyle(InsetGroupedListStyle())
             }
         }
-        .navigationTitle("Cameras")
-        .sheet(isPresented: $showSettings) {
-            CameraSettingsView(camera: cameras[selectedCamera])
+        .sheet(isPresented: $showDeviceCamera) {
+            DeviceCameraView()
         }
     }
 }
 
-struct Camera: Identifiable {
-    let id: String
-    let name: String
-    let isOnline: Bool
-}
-
-struct CameraButton: View {
+struct CameraListItem: View {
     let camera: Camera
-    let isSelected: Bool
-    let action: () -> Void
     
     var body: some View {
-        Button(action: action) {
-            VStack(spacing: 5) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(isSelected ? Color.blue : Color(.systemGray5))
-                        .frame(width: 60, height: 60)
-                    
+        HStack {
+            Image(systemName: "video.fill")
+                .font(.title2)
+                .foregroundColor(camera.isOnline ? .green : .gray)
+                .frame(width: 40, height: 40)
+                .background(Color(.systemGray6))
+                .cornerRadius(8)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(camera.name)
+                    .font(.headline)
+                
+                Text(camera.isOnline ? "Online" : "Offline")
+                    .font(.caption)
+                    .foregroundColor(camera.isOnline ? .green : .gray)
+            }
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .foregroundColor(.gray)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+struct CameraDetailView: View {
+    let camera: Camera
+    let onClose: () -> Void
+    
+    @State private var isRecording = false
+    
+    var body: some View {
+        VStack {
+            // Camera feed (placeholder)
+            ZStack {
+                Rectangle()
+                    .fill(Color.black)
+                    .aspectRatio(16/9, contentMode: .fit)
+                
+                if camera.isOnline {
+                    // Placeholder for camera feed
                     Image(systemName: "video.fill")
-                        .foregroundColor(isSelected ? .white : .primary)
-                    
-                    // Status indicator
-                    Circle()
-                        .fill(camera.isOnline ? Color.green : Color.red)
-                        .frame(width: 8, height: 8)
-                        .offset(x: 20, y: -20)
+                        .font(.system(size: 50))
+                        .foregroundColor(.white)
+                } else {
+                    // Offline message
+                    VStack {
+                        Image(systemName: "video.slash.fill")
+                            .font(.system(size: 50))
+                            .foregroundColor(.white)
+                        
+                        Text("Camera Offline")
+                            .foregroundColor(.white)
+                            .padding(.top, 10)
+                    }
                 }
                 
-                Text(camera.name)
-                    .font(.caption)
-                    .foregroundColor(isSelected ? .blue : .primary)
-                    .lineLimit(1)
+                // Recording indicator
+                if isRecording {
+                    Circle()
+                        .fill(Color.red)
+                        .frame(width: 20, height: 20)
+                        .padding(8)
+                        .background(Color.black.opacity(0.5))
+                        .cornerRadius(20)
+                        .position(x: 30, y: 30)
+                }
+                
+                // Close button
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.title2)
+                        .foregroundColor(.white)
+                        .padding(8)
+                        .background(Color.black.opacity(0.6))
+                        .clipShape(Circle())
+                }
+                .position(x: 30, y: 30)
             }
-            .frame(width: 70)
+            .cornerRadius(12)
+            .padding()
+            
+            // Controls
+            HStack(spacing: 30) {
+                Button(action: {
+                    // Take snapshot
+                }) {
+                    VStack {
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 24))
+                        Text("Snapshot")
+                            .font(.caption)
+                    }
+                }
+                .disabled(!camera.isOnline)
+                
+                Button(action: {
+                    isRecording.toggle()
+                }) {
+                    VStack {
+                        Image(systemName: isRecording ? "stop.fill" : "record.circle")
+                            .font(.system(size: 24))
+                            .foregroundColor(isRecording ? .red : .primary)
+                        Text(isRecording ? "Stop" : "Record")
+                            .font(.caption)
+                    }
+                }
+                .disabled(!camera.isOnline)
+                
+                Button(action: {
+                    // Open settings
+                }) {
+                    VStack {
+                        Image(systemName: "gear")
+                            .font(.system(size: 24))
+                        Text("Settings")
+                            .font(.caption)
+                    }
+                }
+            }
+            .padding()
+            
+            // Camera info
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("Status:")
+                        .fontWeight(.bold)
+                    Text(camera.isOnline ? "Online" : "Offline")
+                        .foregroundColor(camera.isOnline ? .green : .red)
+                }
+                
+                HStack {
+                    Text("Resolution:")
+                        .fontWeight(.bold)
+                    Text(camera.isOnline ? "1080p" : "N/A")
+                }
+                
+                HStack {
+                    Text("Last Motion:")
+                        .fontWeight(.bold)
+                    Text(camera.isOnline ? "2 minutes ago" : "N/A")
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding()
+            .background(Color(UIColor.secondarySystemBackground))
+            .cornerRadius(12)
+            .padding()
+            
+            Spacer()
         }
     }
 }
 
 struct CameraSettingsView: View {
-    let camera: Camera
     @Environment(\.presentationMode) var presentationMode
     @State private var recordingQuality = 1 // 0: Low, 1: Medium, 2: High
-    @State private var motionDetection = true
-    @State private var notifications = true
+    @State private var saveToPhotos = true
     
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Camera Info")) {
-                    HStack {
-                        Text("Name")
-                        Spacer()
-                        Text(camera.name)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    HStack {
-                        Text("Status")
-                        Spacer()
-                        Text(camera.isOnline ? "Online" : "Offline")
-                            .foregroundColor(camera.isOnline ? .green : .red)
-                    }
-                    
-                    HStack {
-                        Text("ID")
-                        Spacer()
-                        Text(camera.id)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
                 Section(header: Text("Recording Settings")) {
                     Picker("Quality", selection: $recordingQuality) {
                         Text("Low").tag(0)
@@ -233,15 +241,15 @@ struct CameraSettingsView: View {
                     }
                     .pickerStyle(SegmentedPickerStyle())
                     
-                    Toggle("Motion Detection", isOn: $motionDetection)
-                    Toggle("Notifications", isOn: $notifications)
+                    Toggle("Save to Photos", isOn: $saveToPhotos)
                 }
                 
-                Section {
-                    Button("Reset to Defaults") {
-                        recordingQuality = 1
-                        motionDetection = true
-                        notifications = true
+                Section(header: Text("About")) {
+                    HStack {
+                        Text("Version")
+                        Spacer()
+                        Text("1.0.0")
+                            .foregroundColor(.gray)
                     }
                 }
             }
@@ -255,9 +263,7 @@ struct CameraSettingsView: View {
 
 struct CameraView_Previews: PreviewProvider {
     static var previews: some View {
-        NavigationView {
-            CameraView()
-                .environmentObject(AppState())
-        }
+        CameraView()
+            .environmentObject(AppState())
     }
 }

@@ -31,6 +31,10 @@ class CleanupScheduler {
             print("Media cleanup scheduled successfully")
         } catch {
             print("Could not schedule media cleanup: \(error)")
+            // Don't treat this as a fatal error in development/simulator
+            #if DEBUG
+            print("Note: Background tasks often fail in the simulator or development environment")
+            #endif
         }
     }
     

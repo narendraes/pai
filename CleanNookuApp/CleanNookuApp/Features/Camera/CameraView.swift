@@ -49,51 +49,73 @@ class CameraManager: NSObject, ObservableObject {
     
     override init() {
         super.init()
-        checkAuthorization()
+        print("CameraManager initialized")
     }
     
     func checkAuthorization() {
+        print("Checking camera authorization")
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
+            print("Camera access already authorized")
             self.isAuthorized = true
             self.setupCaptureSession()
         case .notDetermined:
+            print("Camera access not determined, requesting...")
             AVCaptureDevice.requestAccess(for: .video) { granted in
+                print("Camera access request result: \(granted)")
                 DispatchQueue.main.async {
                     self.isAuthorized = granted
                     if granted {
                         self.setupCaptureSession()
+                    } else {
+                        print("Camera access denied by user")
                     }
                 }
             }
-        case .denied, .restricted:
+        case .denied:
+            print("Camera access denied")
+            self.isAuthorized = false
+        case .restricted:
+            print("Camera access restricted")
             self.isAuthorized = false
         @unknown default:
+            print("Camera access unknown status")
             self.isAuthorized = false
         }
     }
     
     private func setupCaptureSession() {
+        print("Setting up capture session")
         DispatchQueue.global(qos: .userInitiated).async {
             do {
                 self.session.beginConfiguration()
                 
                 // Add video input
                 if let videoDevice = AVCaptureDevice.default(for: .video) {
+                    print("Found video device: \(videoDevice.localizedName)")
                     let videoDeviceInput = try AVCaptureDeviceInput(device: videoDevice)
                     if self.session.canAddInput(videoDeviceInput) {
                         self.session.addInput(videoDeviceInput)
                         self.videoDeviceInput = videoDeviceInput
+                        print("Added video input to session")
+                    } else {
+                        print("Could not add video input to session")
+                        DispatchQueue.main.async {
+                            self.error = NSError(domain: "CameraManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Could not add video input to session"])
+                        }
+                    }
+                } else {
+                    print("No video device found")
+                    DispatchQueue.main.async {
+                        self.error = NSError(domain: "CameraManager", code: 2, userInfo: [NSLocalizedDescriptionKey: "No video device found"])
                     }
                 }
                 
                 self.session.commitConfiguration()
                 self.startSession()
                 
-                DispatchQueue.main.async {
-                    self.isSessionRunning = true
-                }
             } catch {
+                print("Error setting up capture session: \(error.localizedDescription)")
                 DispatchQueue.main.async {
                     self.error = error
                 }
@@ -102,9 +124,11 @@ class CameraManager: NSObject, ObservableObject {
     }
     
     func startSession() {
+        print("Starting camera session")
         if !session.isRunning {
             DispatchQueue.global(qos: .userInitiated).async {
                 self.session.startRunning()
+                print("Camera session running: \(self.session.isRunning)")
                 DispatchQueue.main.async {
                     self.isSessionRunning = self.session.isRunning
                 }
@@ -113,9 +137,11 @@ class CameraManager: NSObject, ObservableObject {
     }
     
     func stopSession() {
+        print("Stopping camera session")
         if session.isRunning {
             DispatchQueue.global(qos: .userInitiated).async {
                 self.session.stopRunning()
+                print("Camera session stopped")
                 DispatchQueue.main.async {
                     self.isSessionRunning = self.session.isRunning
                 }
@@ -133,46 +159,78 @@ class CameraManager: NSObject, ObservableObject {
 struct DeviceCameraView: View {
     @StateObject private var cameraManager = CameraManager()
     @Environment(\.presentationMode) var presentationMode
+    @State private var showError = false
+    @State private var errorMessage = ""
     
     var body: some View {
         ZStack {
             // Camera preview
             if cameraManager.isAuthorized {
-                CameraPreviewView(cameraManager: cameraManager)
-                    .edgesIgnoringSafeArea(.all)
-                
-                // Camera controls overlay
-                VStack {
-                    HStack {
-                        Button(action: {
-                            presentationMode.wrappedValue.dismiss()
-                        }) {
-                            Image(systemName: "xmark")
-                                .font(.title)
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(Color.black.opacity(0.6))
-                                .clipShape(Circle())
+                if cameraManager.error == nil {
+                    CameraPreviewView(cameraManager: cameraManager)
+                        .edgesIgnoringSafeArea(.all)
+                    
+                    // Camera controls overlay
+                    VStack {
+                        HStack {
+                            Button(action: {
+                                presentationMode.wrappedValue.dismiss()
+                            }) {
+                                Image(systemName: "xmark")
+                                    .font(.title)
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .background(Color.black.opacity(0.6))
+                                    .clipShape(Circle())
+                            }
+                            .padding(.leading)
+                            
+                            Spacer()
                         }
-                        .padding(.leading)
+                        .padding(.top, 30)
                         
                         Spacer()
                     }
-                    .padding(.top, 30)
-                    
-                    Spacer()
+                } else {
+                    // Error view
+                    VStack(spacing: 20) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.system(size: 60))
+                            .foregroundColor(.yellow)
+                        
+                        Text("Camera Error")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                        
+                        Text(cameraManager.error?.localizedDescription ?? "Unknown error")
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                        
+                        Button(action: {
+                            presentationMode.wrappedValue.dismiss()
+                        }) {
+                            Text("Close")
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 10)
+                                .background(Color.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
+                        .padding(.top)
+                    }
+                    .padding()
                 }
             } else {
                 // Camera not authorized view
                 VStack(spacing: 20) {
-                    Image(systemName: "camera.slash.fill")
+                    Image(systemName: "camera.metering.none")
                         .font(.system(size: 60))
                     
                     Text("Camera Access Required")
                         .font(.title2)
                         .fontWeight(.bold)
                     
-                    Text("Please allow camera access in System Settings to use this feature.")
+                    Text("Please allow camera access in Settings to use this feature.")
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                     
@@ -202,9 +260,11 @@ struct DeviceCameraView: View {
             }
         }
         .onAppear {
+            print("DeviceCameraView appeared")
             cameraManager.checkAuthorization()
         }
         .onDisappear {
+            print("DeviceCameraView disappeared")
             cameraManager.stopSession()
         }
     }

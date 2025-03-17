@@ -17,19 +17,19 @@ struct ContentView: View {
                 
                 // Main menu buttons
                 VStack(spacing: 20) {
-                    NavigationLink(destination: Text("Chat View")) {
+                    NavigationLink(destination: ChatView()) {
                         MenuButton(title: "Chat with AI", icon: "message.fill")
                     }
                     
-                    NavigationLink(destination: Text("Camera View")) {
+                    NavigationLink(destination: CameraView()) {
                         MenuButton(title: "Camera Control", icon: "camera.fill")
                     }
                     
-                    NavigationLink(destination: Text("Media Analysis")) {
+                    NavigationLink(destination: AnalysisView()) {
                         MenuButton(title: "Media Analysis", icon: "photo.fill")
                     }
                     
-                    NavigationLink(destination: Text("Settings")) {
+                    NavigationLink(destination: SettingsView()) {
                         MenuButton(title: "Settings", icon: "gear")
                     }
                 }

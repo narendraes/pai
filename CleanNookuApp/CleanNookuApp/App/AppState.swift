@@ -34,6 +34,25 @@ public class AppState: ObservableObject {
         case analysis
         case settings
     }
+    
+    // MARK: - Public Methods
+    
+    /// Connect to the server
+    public func connect() {
+        connectionStatus = .connecting
+        
+        // Simulate connection process
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+            self?.connectionStatus = .connected
+            self?.isConnected = true
+        }
+    }
+    
+    /// Disconnect from the server
+    public func disconnect() {
+        connectionStatus = .disconnected
+        isConnected = false
+    }
 }
 
 // MARK: - App Settings

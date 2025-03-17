@@ -2,9 +2,9 @@ import Foundation
 import LocalAuthentication
 
 /// Service for handling biometric authentication (Face ID / Touch ID)
-class BiometricAuthService {
+public class BiometricAuthService {
     /// Shared instance for singleton access
-    static let shared = BiometricAuthService()
+    public static let shared = BiometricAuthService()
     
     /// Biometric authentication context
     private let context = LAContext()
@@ -14,7 +14,7 @@ class BiometricAuthService {
     
     /// Check if biometric authentication is available
     /// - Returns: A tuple containing a boolean indicating availability and a string describing the biometric type
-    func biometricAuthAvailable() -> (available: Bool, biometricType: String) {
+    public func biometricAuthAvailable() -> (available: Bool, biometricType: String) {
         var error: NSError?
         
         // Check if biometric authentication is available
@@ -28,8 +28,10 @@ class BiometricAuthService {
                 biometricType = "Face ID"
             case .touchID:
                 biometricType = "Touch ID"
-            default:
-                biometricType = "Biometrics"
+            case .opticID:
+                biometricType = "Optic ID"
+            @unknown default:
+                biometricType = "Unknown"
             }
         }
         
@@ -38,32 +40,20 @@ class BiometricAuthService {
     
     /// Authenticate using biometrics
     /// - Parameters:
-    ///   - reason: The reason for authentication to display to the user
-    ///   - completion: Callback with authentication result
-    func authenticate(reason: String, completion: @escaping (Result<Void, Error>) -> Void) {
-        // Reset context for new authentication
-        context.invalidate()
-        
-        // Check if biometric authentication is available
-        var error: NSError?
-        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
-            if let error = error {
-                completion(.failure(error))
-            } else {
-                completion(.failure(BiometricError.notAvailable))
-            }
+    ///   - reason: The reason for requesting biometric authentication
+    ///   - completion: Completion handler with Result type
+    public func authenticate(reason: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil) else {
+            completion(.failure(NSError(domain: "BiometricAuthService", code: -1)))
             return
         }
         
-        // Perform authentication
         context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, error in
             DispatchQueue.main.async {
                 if success {
                     completion(.success(()))
-                } else if let error = error {
-                    completion(.failure(error))
                 } else {
-                    completion(.failure(BiometricError.failed))
+                    completion(.failure(error ?? NSError(domain: "BiometricAuthService", code: -1)))
                 }
             }
         }

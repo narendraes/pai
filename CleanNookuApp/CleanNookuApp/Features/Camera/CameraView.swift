@@ -21,6 +21,56 @@ enum CameraType {
     case external // External IP camera
 }
 
+// Define DeviceCameraView
+struct DeviceCameraView: View {
+    @Environment(\.presentationMode) var presentationMode
+    
+    var body: some View {
+        VStack {
+            Text("Device Camera")
+                .font(.title)
+                .padding()
+            
+            Spacer()
+            
+            Text("Camera functionality placeholder")
+                .foregroundColor(.gray)
+            
+            Spacer()
+            
+            Button("Close") {
+                presentationMode.wrappedValue.dismiss()
+            }
+            .padding()
+        }
+    }
+}
+
+// Define MediaLibraryView
+struct MediaLibraryView: View {
+    @Environment(\.presentationMode) var presentationMode
+    
+    var body: some View {
+        VStack {
+            Text("Media Library")
+                .font(.title)
+                .padding()
+            
+            Spacer()
+            
+            Text("Media library placeholder")
+                .foregroundColor(.gray)
+            
+            Spacer()
+            
+            Button("Close") {
+                presentationMode.wrappedValue.dismiss()
+            }
+            .padding()
+        }
+    }
+}
+
 struct CameraView: View {
     @EnvironmentObject var appState: AppState
     

@@ -1,6 +1,9 @@
 import SwiftUI
 import AVFoundation
 
+// Import Camera model
+import Foundation
+
 struct CameraView: View {
     @EnvironmentObject var appState: AppState
     

@@ -24,11 +24,11 @@ enum CameraType {
 
 // Camera Preview View for showing webcam feed
 struct CameraPreviewView: UIViewRepresentable {
-    @ObservedObject var cameraManager: CameraManager
+    let session: AVCaptureSession
     
     func makeUIView(context: Context) -> UIView {
         let view = UIView(frame: UIScreen.main.bounds)
-        let previewLayer = AVCaptureVideoPreviewLayer(session: cameraManager.session)
+        let previewLayer = AVCaptureVideoPreviewLayer(session: session)
         previewLayer.frame = view.bounds
         previewLayer.videoGravity = .resizeAspectFill
         view.layer.addSublayer(previewLayer)
@@ -86,7 +86,9 @@ class CameraManager: NSObject, ObservableObject {
     
     private func setupCaptureSession() {
         print("Setting up capture session")
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
             do {
                 self.session.beginConfiguration()
                 
@@ -126,7 +128,9 @@ class CameraManager: NSObject, ObservableObject {
     func startSession() {
         print("Starting camera session")
         if !session.isRunning {
-            DispatchQueue.global(qos: .userInitiated).async {
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                guard let self = self else { return }
+                
                 self.session.startRunning()
                 print("Camera session running: \(self.session.isRunning)")
                 DispatchQueue.main.async {
@@ -139,7 +143,9 @@ class CameraManager: NSObject, ObservableObject {
     func stopSession() {
         print("Stopping camera session")
         if session.isRunning {
-            DispatchQueue.global(qos: .userInitiated).async {
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                guard let self = self else { return }
+                
                 self.session.stopRunning()
                 print("Camera session stopped")
                 DispatchQueue.main.async {
@@ -159,38 +165,37 @@ class CameraManager: NSObject, ObservableObject {
 struct DeviceCameraView: View {
     @StateObject private var cameraManager = CameraManager()
     @Environment(\.presentationMode) var presentationMode
-    @State private var showError = false
-    @State private var errorMessage = ""
     
     var body: some View {
         ZStack {
             // Camera preview
             if cameraManager.isAuthorized {
                 if cameraManager.error == nil {
-                    CameraPreviewView(cameraManager: cameraManager)
+                    CameraPreviewView(session: cameraManager.session)
                         .edgesIgnoringSafeArea(.all)
-                    
-                    // Camera controls overlay
-                    VStack {
-                        HStack {
-                            Button(action: {
-                                presentationMode.wrappedValue.dismiss()
-                            }) {
-                                Image(systemName: "xmark")
-                                    .font(.title)
-                                    .foregroundColor(.white)
-                                    .padding()
-                                    .background(Color.black.opacity(0.6))
-                                    .clipShape(Circle())
+                        .overlay(
+                            // Camera controls overlay
+                            VStack {
+                                HStack {
+                                    Button(action: {
+                                        presentationMode.wrappedValue.dismiss()
+                                    }) {
+                                        Image(systemName: "xmark")
+                                            .font(.title)
+                                            .foregroundColor(.white)
+                                            .padding()
+                                            .background(Color.black.opacity(0.6))
+                                            .clipShape(Circle())
+                                    }
+                                    .padding(.leading)
+                                    
+                                    Spacer()
+                                }
+                                .padding(.top, 30)
+                                
+                                Spacer()
                             }
-                            .padding(.leading)
-                            
-                            Spacer()
-                        }
-                        .padding(.top, 30)
-                        
-                        Spacer()
-                    }
+                        )
                 } else {
                     // Error view
                     VStack(spacing: 20) {

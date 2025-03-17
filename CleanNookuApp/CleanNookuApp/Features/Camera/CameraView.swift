@@ -57,7 +57,9 @@ class CameraManager: NSObject, ObservableObject {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
             print("Camera access already authorized")
-            self.isAuthorized = true
+            DispatchQueue.main.async {
+                self.isAuthorized = true
+            }
             self.setupCaptureSession()
         case .notDetermined:
             print("Camera access not determined, requesting...")
@@ -74,13 +76,19 @@ class CameraManager: NSObject, ObservableObject {
             }
         case .denied:
             print("Camera access denied")
-            self.isAuthorized = false
+            DispatchQueue.main.async {
+                self.isAuthorized = false
+            }
         case .restricted:
             print("Camera access restricted")
-            self.isAuthorized = false
+            DispatchQueue.main.async {
+                self.isAuthorized = false
+            }
         @unknown default:
             print("Camera access unknown status")
-            self.isAuthorized = false
+            DispatchQueue.main.async {
+                self.isAuthorized = false
+            }
         }
     }
     
@@ -168,13 +176,18 @@ struct DeviceCameraView: View {
     
     var body: some View {
         ZStack {
-            // Camera preview
-            if cameraManager.isAuthorized {
-                if cameraManager.error == nil {
-                    CameraPreviewView(session: cameraManager.session)
-                        .edgesIgnoringSafeArea(.all)
-                        .overlay(
-                            // Camera controls overlay
+            Color(.systemBackground).edgesIgnoringSafeArea(.all)
+            
+            // Camera content based on state
+            Group {
+                if cameraManager.isAuthorized {
+                    if cameraManager.error == nil {
+                        // Camera preview
+                        ZStack {
+                            CameraPreviewView(session: cameraManager.session)
+                                .edgesIgnoringSafeArea(.all)
+                            
+                            // Close button
                             VStack {
                                 HStack {
                                     Button(action: {
@@ -195,73 +208,25 @@ struct DeviceCameraView: View {
                                 
                                 Spacer()
                             }
+                        }
+                    } else {
+                        // Error view
+                        ErrorView(
+                            errorMessage: cameraManager.error?.localizedDescription ?? "Unknown error",
+                            onClose: { presentationMode.wrappedValue.dismiss() }
                         )
+                    }
                 } else {
-                    // Error view
-                    VStack(spacing: 20) {
-                        Image(systemName: "exclamationmark.triangle")
-                            .font(.system(size: 60))
-                            .foregroundColor(.yellow)
-                        
-                        Text("Camera Error")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        
-                        Text(cameraManager.error?.localizedDescription ?? "Unknown error")
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                        
-                        Button(action: {
-                            presentationMode.wrappedValue.dismiss()
-                        }) {
-                            Text("Close")
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 10)
-                                .background(Color.blue)
-                                .foregroundColor(.white)
-                                .cornerRadius(8)
-                        }
-                        .padding(.top)
-                    }
-                    .padding()
+                    // Camera not authorized view
+                    NotAuthorizedView(
+                        onOpenSettings: {
+                            if let url = URL(string: UIApplication.openSettingsURLString) {
+                                UIApplication.shared.open(url)
+                            }
+                        },
+                        onCancel: { presentationMode.wrappedValue.dismiss() }
+                    )
                 }
-            } else {
-                // Camera not authorized view
-                VStack(spacing: 20) {
-                    Image(systemName: "camera.metering.none")
-                        .font(.system(size: 60))
-                    
-                    Text("Camera Access Required")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-                    Text("Please allow camera access in Settings to use this feature.")
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                    
-                    Button(action: {
-                        if let url = URL(string: UIApplication.openSettingsURLString) {
-                            UIApplication.shared.open(url)
-                        }
-                    }) {
-                        Text("Open Settings")
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 10)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
-                    }
-                    .padding(.top)
-                    
-                    Button(action: {
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Text("Cancel")
-                            .foregroundColor(.blue)
-                    }
-                    .padding(.top, 10)
-                }
-                .padding()
             }
         }
         .onAppear {
@@ -272,6 +237,77 @@ struct DeviceCameraView: View {
             print("DeviceCameraView disappeared")
             cameraManager.stopSession()
         }
+    }
+}
+
+// Error View
+struct ErrorView: View {
+    let errorMessage: String
+    let onClose: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 60))
+                .foregroundColor(.yellow)
+            
+            Text("Camera Error")
+                .font(.title2)
+                .fontWeight(.bold)
+            
+            Text(errorMessage)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+            
+            Button(action: onClose) {
+                Text("Close")
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+            }
+            .padding(.top)
+        }
+        .padding()
+    }
+}
+
+// Not Authorized View
+struct NotAuthorizedView: View {
+    let onOpenSettings: () -> Void
+    let onCancel: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "camera.metering.none")
+                .font(.system(size: 60))
+            
+            Text("Camera Access Required")
+                .font(.title2)
+                .fontWeight(.bold)
+            
+            Text("Please allow camera access in Settings to use this feature.")
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+            
+            Button(action: onOpenSettings) {
+                Text("Open Settings")
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+            }
+            .padding(.top)
+            
+            Button(action: onCancel) {
+                Text("Cancel")
+                    .foregroundColor(.blue)
+            }
+            .padding(.top, 10)
+        }
+        .padding()
     }
 }
 

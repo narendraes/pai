@@ -30,20 +30,26 @@ public class APIServer {
     // MARK: - Public Methods
     
     /// Start the API server
-    /// - Parameter port: Port to listen on (default: 8080)
+    /// - Parameter port: The port to listen on (default is 8080)
     /// - Returns: True if successfully started, false otherwise
+    @discardableResult
     public func start(port: Int = 8080) -> Bool {
         logger.info("Starting API server on port \(port)")
         
+        // Check if already running
         guard !isRunning else {
             logger.warning("API server already running")
-            return true
+            return false
         }
+        
+        self.port = port
         
         do {
             // Create Vapor application
             let app = Application(.development)
             app.http.server.configuration.port = port
+            // Bind to all interfaces (0.0.0.0) instead of just localhost
+            app.http.server.configuration.hostname = "0.0.0.0"
             
             // Configure routes
             configureRoutes(app)
@@ -52,13 +58,12 @@ public class APIServer {
             try app.start()
             
             self.app = app
-            self.port = port
             isRunning = true
             
             logger.info("API server started on port \(port)")
             return true
         } catch {
-            logger.error("Failed to start API server: \(error)")
+            logger.error("Failed to start API server: \(error.localizedDescription)")
             return false
         }
     }
@@ -82,16 +87,26 @@ public class APIServer {
     // MARK: - Private Methods
     
     private func configureRoutes(_ app: Application) {
-        // Configure CORS
-        let corsConfiguration = CORSMiddleware.Configuration(
+        // Configure CORS to be very permissive for testing
+        app.middleware.use(CORSMiddleware(configuration: .init(
             allowedOrigin: .all,
-            allowedMethods: [.GET, .POST, .PUT, .DELETE],
-            allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith]
-        )
-        app.middleware.use(CORSMiddleware(configuration: corsConfiguration))
+            allowedMethods: [.GET, .POST, .PUT, .OPTIONS, .DELETE, .PATCH],
+            allowedHeaders: ["*"],
+            allowCredentials: false,
+            exposedHeaders: ["*"]
+        )))
         
         // Configure authentication
         app.middleware.use(AuthMiddleware())
+        
+        // Add explicit OPTIONS handler for all API routes
+        app.on(.OPTIONS, "api", "**") { req -> Response in
+            let response = Response(status: .ok)
+            response.headers.add(name: .accessControlAllowOrigin, value: "*")
+            response.headers.add(name: .accessControlAllowMethods, value: "GET, POST, PUT, DELETE, OPTIONS, PATCH")
+            response.headers.add(name: .accessControlAllowHeaders, value: "*")
+            return response
+        }
         
         // Health check endpoint
         app.get("health") { req -> String in
@@ -395,10 +410,23 @@ public struct AuthorizedKeyResponse: Content {
 /// Authentication middleware
 struct AuthMiddleware: Middleware {
     func respond(to request: Request, chainingTo next: Responder) -> EventLoopFuture<Response> {
-        // Skip authentication for health check and version endpoints
-        if request.url.path == "/health" || request.url.path == "/version" {
+        // Skip authentication for health check, version endpoints, and OPTIONS requests
+        if request.url.path == "/health" || 
+           request.url.path == "/version" || 
+           request.method == .OPTIONS {
             return next.respond(to: request)
         }
+        
+        // For testing purposes, allow requests without API key in development
+        #if DEBUG
+        if request.application.environment == .development {
+            // Log the missing API key but allow the request
+            if request.headers.first(name: "X-API-Key") == nil {
+                request.logger.warning("Missing API key in development mode - allowing request")
+            }
+            return next.respond(to: request)
+        }
+        #endif
         
         // Check for API key in header
         guard let apiKey = request.headers.first(name: "X-API-Key") else {

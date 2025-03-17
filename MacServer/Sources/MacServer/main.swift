@@ -34,6 +34,13 @@ logger.info("Nooku Mac Server is running")
 logger.info("API server: http://localhost:\(APIServer.shared.port)")
 logger.info("SSH server: ssh://localhost:\(SSHServer.shared.port)")
 
+// Print available cameras
+let cameras = CameraManager.shared.listCameras()
+logger.info("Available cameras: \(cameras.count)")
+for camera in cameras {
+    logger.info("Camera: \(camera.name) (\(camera.position)) - ID: \(camera.id)")
+}
+
 // Setup signal handling for graceful shutdown
 signal(SIGINT) { _ in
     logger.info("Received interrupt signal, shutting down...")

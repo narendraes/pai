@@ -52,6 +52,8 @@
     <string>Nooku needs access to your microphone to record audio with videos.</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>Nooku needs access to your photo library to save captured photos and videos.</string>
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>Please allow access to save photos from the Mac camera to your photo library.</string>
     <key>BGTaskSchedulerPermittedIdentifiers</key>
     <array>
         <string>com.nooku.app.mediacleanup</string>

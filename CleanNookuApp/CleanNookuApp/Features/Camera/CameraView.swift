@@ -371,13 +371,12 @@ struct CameraView: View {
     ]
     
     @State private var selectedCamera: Camera?
-    @State private var showDeviceCamera = false
     @State private var showMediaLibrary = false
     @State private var showMacCamera = false
     
     var body: some View {
         VStack(spacing: 0) {
-            // Header with device camera button
+            // Header with Mac camera button
             HStack {
                 Text("Cameras")
                     .font(.title)
@@ -391,36 +390,18 @@ struct CameraView: View {
                     Image(systemName: "photo.on.rectangle")
                         .font(.title2)
                         .foregroundColor(.blue)
+                        .frame(width: 44, height: 44)
                 }
-                .padding(.trailing, 8)
                 
                 Button(action: {
                     showMacCamera = true
                 }) {
-                    HStack {
-                        Image(systemName: "laptopcomputer")
-                        Text("Mac")
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Color.purple)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-                }
-                .padding(.trailing, 8)
-                
-                Button(action: {
-                    showDeviceCamera = true
-                }) {
-                    HStack {
-                        Image(systemName: "camera.fill")
-                        Text("Webcam")
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
+                    Image(systemName: "laptopcomputer")
+                        .font(.title2)
+                        .foregroundColor(.white)
+                        .frame(width: 44, height: 44)
+                        .background(Color.blue)
+                        .cornerRadius(12)
                 }
             }
             .padding()
@@ -450,9 +431,6 @@ struct CameraView: View {
                         .padding(.bottom)
                 }
             }
-        }
-        .sheet(isPresented: $showDeviceCamera) {
-            DeviceCameraView()
         }
         .sheet(isPresented: $showMediaLibrary) {
             MediaLibraryView()
@@ -670,63 +648,187 @@ struct MacCameraView: View {
     @ObservedObject private var macClient = MacServerClient.shared
     @State private var selectedCameraId: String?
     @Environment(\.presentationMode) private var presentationMode
+    @State private var showDebug = false
+    @State private var isLoading = false
+    @State private var lastErrorMessage: String?
     
     var body: some View {
         NavigationView {
-            VStack {
-                Text("Mac Camera")
-                    .font(.title)
-                    .padding()
-                
-                if macClient.isConnected {
-                    if let image = macClient.currentImage {
-                        Image(uiImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
+            VStack(spacing: 0) {
+                if isLoading {
+                    VStack {
+                        Spacer()
+                        ProgressView("Connecting...")
                             .padding()
-                    } else {
-                        Text("No camera preview available")
-                            .foregroundColor(.gray)
+                        Spacer()
                     }
-                    
-                    Button("Take Photo") {
-                        macClient.takeSnapshot()
-                            .sink(
-                                receiveCompletion: { _ in
-                                    presentationMode.wrappedValue.dismiss()
-                                },
-                                receiveValue: { _ in }
-                            )
-                            .store(in: &macClient.cancellables)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .padding()
                 } else {
-                    Text("Not connected to Mac server")
-                        .foregroundColor(.red)
-                        .padding()
-                    
-                    Button("Connect") {
-                        checkConnection()
+                    // Status indicator
+                    HStack {
+                        Circle()
+                            .fill(macClient.isConnected ? Color.green : Color.red)
+                            .frame(width: 12, height: 12)
+                        
+                        Text(macClient.isConnected ? "Connected" : "Not Connected")
+                            .font(.subheadline)
+                            .foregroundColor(macClient.isConnected ? .green : .red)
                     }
-                    .buttonStyle(.bordered)
-                }
+                    .padding(.top, 12)
                 
-                Spacer()
+                    if macClient.isConnected {
+                        if let image = macClient.currentImage {
+                            ZStack(alignment: .bottom) {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .cornerRadius(16)
+                                    .shadow(radius: 4)
+                                    .padding(.horizontal)
+                                    .padding(.vertical, 8)
+                                
+                                // Capture button
+                                Button(action: {
+                                    takePhoto()
+                                }) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.white)
+                                            .frame(width: 70, height: 70)
+                                            .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 2)
+                                        
+                                        Circle()
+                                            .stroke(Color.gray.opacity(0.3), lineWidth: 3)
+                                            .frame(width: 60, height: 60)
+                                        
+                                        Circle()
+                                            .fill(Color.blue)
+                                            .frame(width: 52, height: 52)
+                                        
+                                        Image(systemName: "camera")
+                                            .font(.system(size: 24, weight: .medium))
+                                            .foregroundColor(.white)
+                                    }
+                                    .contentShape(Circle())
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                .padding(.bottom, 20)
+                            }
+                        } else {
+                            VStack {
+                                Spacer()
+                                Text("No camera preview available")
+                                    .foregroundColor(.gray)
+                                    .padding()
+                                
+                                Button("Refresh Preview") {
+                                    refreshPreview()
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .padding(.bottom, 20)
+                                Spacer()
+                            }
+                        }
+                    } else {
+                        VStack(spacing: 20) {
+                            Spacer()
+                            Image(systemName: "laptopcomputer.slash")
+                                .font(.system(size: 60))
+                                .foregroundColor(.red.opacity(0.7))
+                            
+                            Text("Not connected to Mac server")
+                                .font(.headline)
+                                .foregroundColor(.red)
+                            
+                            if let errorMessage = lastErrorMessage {
+                                Text(errorMessage)
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal)
+                            }
+                            
+                            Button("Connect") {
+                                connectToServer()
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .padding(.top)
+                            
+                            Button("Test Connection") {
+                                testConnection()
+                            }
+                            .buttonStyle(.bordered)
+                            Spacer()
+                        }
+                        .padding()
+                    }
+                
+                    Spacer()
+                    
+                    // Debug section
+                    if showDebug {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Debug Info")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .padding(.horizontal)
+                            
+                            ScrollView {
+                                Text(macClient.debugMessage)
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(8)
+                                    .background(Color.black.opacity(0.05))
+                                    .cornerRadius(8)
+                            }
+                            .frame(height: 120)
+                            .padding(.horizontal)
+                        }
+                        .padding(.bottom, 8)
+                    }
+                    
+                    // Toggle debug info
+                    Toggle("Show Debug Info", isOn: $showDebug)
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                        .background(Color(.systemGray6))
+                }
             }
+            .navigationTitle("Mac Camera")
+            .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(leading: Button("Close") {
                 presentationMode.wrappedValue.dismiss()
             })
             .onAppear {
-                checkConnection()
+                macClient.debugMessage = "View appeared"
+                connectToServer()
+            }
+            .alert(item: $macClient.alertItem) { alertItem in
+                Alert(
+                    title: Text(alertItem.title),
+                    message: Text(alertItem.message),
+                    dismissButton: .default(Text("OK"))
+                )
             }
         }
     }
     
-    private func checkConnection() {
+    private func connectToServer() {
+        isLoading = true
+        macClient.debugMessage += "\nAttempting to connect..."
+        
         macClient.checkConnection()
+            .receive(on: DispatchQueue.main)
             .sink(
-                receiveCompletion: { _ in
+                receiveCompletion: { completion in
+                    isLoading = false
+                    if case .failure(let error) = completion {
+                        lastErrorMessage = error.localizedDescription
+                        macClient.debugMessage += "\nConnection check failed: \(error.localizedDescription)"
+                    } else {
+                        lastErrorMessage = nil
+                    }
+                    
                     if macClient.isConnected {
                         refreshCameras()
                     }
@@ -736,10 +838,64 @@ struct MacCameraView: View {
             .store(in: &macClient.cancellables)
     }
     
+    private func testConnection() {
+        isLoading = true
+        // Try connecting via standard URL
+        let testURLs = [
+            "http://192.168.5.110:8080/health",
+            "http://127.0.0.1:8080/health",
+            "http://localhost:8080/health"
+        ]
+        
+        macClient.debugMessage = "Testing connections..."
+        var successFound = false
+        
+        for (index, urlString) in testURLs.enumerated() {
+            guard let url = URL(string: urlString) else { continue }
+            
+            let task = URLSession.shared.dataTask(with: url) { data, response, error in
+                DispatchQueue.main.async {
+                    if let error = error {
+                        macClient.debugMessage += "\nTest \(index+1) failed: \(error.localizedDescription)"
+                    } else if let httpResponse = response as? HTTPURLResponse {
+                        let responseData = data != nil ? String(data: data!, encoding: .utf8) ?? "No data" : "No data"
+                        macClient.debugMessage += "\nTest \(index+1): HTTP \(httpResponse.statusCode), response: \(responseData)"
+                        
+                        if httpResponse.statusCode == 200 {
+                            successFound = true
+                            if !macClient.isConnected {
+                                // If we found a working URL, try to update server URL and connect
+                                if let url = URL(string: urlString.replacingOccurrences(of: "/health", with: "")) {
+                                    macClient.updateServerURL(url)
+                                    connectToServer()
+                                }
+                            }
+                        }
+                    } else {
+                        macClient.debugMessage += "\nTest \(index+1): Unknown response type"
+                    }
+                    
+                    // If this is the last URL and we're still loading
+                    if index == testURLs.count - 1 {
+                        isLoading = false
+                    }
+                }
+            }
+            task.resume()
+        }
+    }
+    
     private func refreshCameras() {
+        isLoading = true
         macClient.listCameras()
+            .receive(on: DispatchQueue.main)
             .sink(
-                receiveCompletion: { _ in },
+                receiveCompletion: { completion in
+                    isLoading = false
+                    if case .failure(let error) = completion {
+                        macClient.debugMessage += "\nFailed to list cameras: \(error.localizedDescription)"
+                    }
+                },
                 receiveValue: { cameras in
                     if let firstCamera = cameras.first {
                         selectCamera(firstCamera.id)
@@ -751,22 +907,72 @@ struct MacCameraView: View {
     
     private func selectCamera(_ cameraId: String) {
         macClient.selectCamera(cameraId: cameraId)
+            .receive(on: DispatchQueue.main)
             .sink(
-                receiveCompletion: { _ in },
+                receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        macClient.debugMessage += "\nFailed to select camera: \(error.localizedDescription)"
+                    }
+                },
                 receiveValue: { success in
                     if success {
                         selectedCameraId = cameraId
-                        macClient.takeSnapshot()
-                            .sink(
-                                receiveCompletion: { _ in },
-                                receiveValue: { _ in }
-                            )
-                            .store(in: &macClient.cancellables)
+                        refreshPreview()
                     }
                 }
             )
             .store(in: &macClient.cancellables)
     }
+    
+    private func refreshPreview() {
+        macClient.takeSnapshot()
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        macClient.debugMessage += "\nFailed to take snapshot: \(error.localizedDescription)"
+                    }
+                },
+                receiveValue: { _ in }
+            )
+            .store(in: &macClient.cancellables)
+    }
+    
+    private func takePhoto() {
+        macClient.takeSnapshot()
+            .receive(on: DispatchQueue.main)
+            .sink(
+                receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        macClient.debugMessage += "\nFailed to take photo: \(error.localizedDescription)"
+                        macClient.showAlert(title: "Error", message: "Failed to take photo: \(error.localizedDescription)")
+                    } else {
+                        // Success - save to photos
+                        if let image = macClient.currentImage {
+                            ImageSaver().saveImage(image) { result in
+                                DispatchQueue.main.async {
+                                    switch result {
+                                    case .success:
+                                        macClient.showAlert(title: "Success", message: "Photo saved to your library")
+                                    case .failure(let error):
+                                        macClient.showAlert(title: "Error", message: "Failed to save photo: \(error.localizedDescription)")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                receiveValue: { _ in }
+            )
+            .store(in: &macClient.cancellables)
+    }
+}
+
+// Alert item for showing alerts
+struct AlertItem: Identifiable {
+    let id = UUID()
+    let title: String
+    let message: String
 }
 
 // Basic MacServerClient implementation for Mac camera access
@@ -778,28 +984,59 @@ class MacServerClient: ObservableObject {
     @Published var availableCameras: [MacCamera] = []
     @Published var currentImage: UIImage?
     @Published var error: Error?
+    @Published var debugMessage: String = ""
+    @Published var alertItem: AlertItem?
     
     var cancellables = Set<AnyCancellable>()
     
-    private var serverURL = URL(string: "http://localhost:8080")!
+    private var serverURL = URL(string: "http://192.168.5.110:8080")!
     private var apiKey = "test-api-key"
-    private let session = URLSession.shared
+    private let session: URLSession
+    
+    init() {
+        debugMessage = "Initializing with URL: \(serverURL.absoluteString)"
+        
+        // Configure URL session with more permissive settings
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30
+        config.waitsForConnectivity = true
+        self.session = URLSession(configuration: config)
+    }
     
     // MARK: - Public Methods
     func checkConnection() -> AnyPublisher<Bool, Error> {
         let url = serverURL.appendingPathComponent("health")
+        debugMessage = "Checking connection to: \(url.absoluteString)"
         
-        return session.dataTaskPublisher(for: url)
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 30
+        
+        return session.dataTaskPublisher(for: request)
             .tryMap { data, response -> Bool in
-                guard let httpResponse = response as? HTTPURLResponse,
-                      httpResponse.statusCode == 200 else {
-                    throw URLError(.cannotConnectToHost)
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    self.debugMessage += "\nInvalid response type"
+                    throw URLError(.badServerResponse)
                 }
+                
+                self.debugMessage += "\nReceived HTTP \(httpResponse.statusCode)"
+                
+                guard httpResponse.statusCode == 200 else {
+                    self.debugMessage += "\nInvalid status code: \(httpResponse.statusCode)"
+                    throw URLError(.badServerResponse)
+                }
+                
+                let responseString = String(data: data, encoding: .utf8) ?? "No data"
+                self.debugMessage += "\nServer response: \(responseString)"
                 return true
             }
             .receive(on: DispatchQueue.main)
             .handleEvents(receiveOutput: { [weak self] isConnected in
                 self?.isConnected = isConnected
+                self?.debugMessage += "\nConnection successful: \(isConnected)"
+            }, receiveCompletion: { [weak self] completion in
+                if case .failure(let error) = completion {
+                    self?.debugMessage += "\nConnection error: \(error.localizedDescription)"
+                }
             })
             .eraseToAnyPublisher()
     }
@@ -868,6 +1105,15 @@ class MacServerClient: ObservableObject {
             })
             .eraseToAnyPublisher()
     }
+    
+    func updateServerURL(_ newURL: URL) {
+        serverURL = newURL
+        debugMessage = "Updated server URL to: \(serverURL.absoluteString)"
+    }
+    
+    func showAlert(title: String, message: String) {
+        alertItem = AlertItem(title: title, message: message)
+    }
 }
 
 // Models needed for MacServerClient
@@ -880,4 +1126,25 @@ struct MacCamera: Identifiable, Codable {
 struct CameraListResponse: Codable {
     let success: Bool
     let data: [MacCamera]
+}
+
+// Photo Saver Helper
+class ImageSaver: NSObject {
+    private var completion: ((Result<Void, Error>) -> Void)?
+    
+    func saveImage(_ image: UIImage, completion: @escaping (Result<Void, Error>) -> Void) {
+        self.completion = completion
+        UIImageWriteToSavedPhotosAlbum(image, self, #selector(saveCompleted(_:didFinishSavingWithError:contextInfo:)), nil)
+    }
+    
+    @objc func saveCompleted(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
+        if let error = error {
+            completion?(.failure(error))
+        } else {
+            completion?(.success(()))
+        }
+        
+        // Break reference cycle
+        completion = nil
+    }
 }

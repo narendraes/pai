@@ -101,6 +101,19 @@ public class CameraManager: NSObject {
     /// Take a snapshot from the current camera
     /// - Returns: Image data in JPEG format, or nil if not available
     public func takeSnapshot() -> Data? {
+        // Make sure session is running
+        if !isRunning {
+            logger.info("Starting session for snapshot")
+            let sessionStarted = startSession()
+            if !sessionStarted {
+                logger.error("Failed to start session for snapshot")
+                return nil
+            }
+            
+            // Wait a moment for frames to be captured
+            Thread.sleep(forTimeInterval: 0.5)
+        }
+        
         guard let frame = latestFrame else {
             logger.warning("No frame available for snapshot")
             return nil

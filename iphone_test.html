@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>iPhone API Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        pre {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 8px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            font-size: 12px;
+        }
+        button {
+            background-color: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            margin: 5px;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        h1 {
+            font-size: 24px;
+        }
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>iPhone API Test</h1>
+    
+    <div class="buttons">
+        <button onclick="testHealth()">Health Check</button>
+        <button onclick="testVersion()">Version Info</button>
+        <button onclick="testCameras()">List Cameras</button>
+        <button onclick="testSnapshot()">Take Snapshot</button>
+    </div>
+    
+    <h2>Response:</h2>
+    <pre id="output">Tap a button to test the API...</pre>
+    
+    <div id="imageContainer"></div>
+
+    <script>
+        // Use your Mac's IP address instead of localhost
+        const SERVER_URL = 'http://192.168.5.110:8080';
+        const API_KEY = 'test-api-key';
+
+        function showResult(text) {
+            document.getElementById('output').textContent = text;
+        }
+
+        function testHealth() {
+            showResult('Testing health endpoint...');
+            fetch(`${SERVER_URL}/health`)
+                .then(response => response.text())
+                .then(data => {
+                    showResult(`Health: ${data}`);
+                })
+                .catch(error => {
+                    showResult(`Error: ${error.message}`);
+                });
+        }
+
+        function testVersion() {
+            showResult('Testing version endpoint...');
+            fetch(`${SERVER_URL}/version`)
+                .then(response => response.json())
+                .then(data => {
+                    showResult(`Version: ${JSON.stringify(data, null, 2)}`);
+                })
+                .catch(error => {
+                    showResult(`Error: ${error.message}`);
+                });
+        }
+
+        function testCameras() {
+            showResult('Listing cameras...');
+            fetch(`${SERVER_URL}/api/v1/cameras`, {
+                method: 'GET',
+                mode: 'cors',
+                headers: {
+                    'X-API-Key': API_KEY,
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                showResult(`Cameras: ${JSON.stringify(data, null, 2)}`);
+            })
+            .catch(error => {
+                showResult(`Error: ${error.message}`);
+            });
+        }
+        
+        function testSnapshot() {
+            showResult('Taking snapshot...');
+            document.getElementById('imageContainer').innerHTML = '';
+            
+            fetch(`${SERVER_URL}/api/v1/cameras/snapshot`, {
+                method: 'GET',
+                mode: 'cors',
+                headers: {
+                    'X-API-Key': API_KEY,
+                    'Accept': 'image/jpeg'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error: ${response.status}`);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(blob);
+                img.style.width = '100%';
+                img.style.borderRadius = '8px';
+                img.style.marginTop = '10px';
+                
+                document.getElementById('imageContainer').appendChild(img);
+                showResult('Snapshot received successfully!');
+            })
+            .catch(error => {
+                showResult(`Error taking snapshot: ${error.message}`);
+            });
+        }
+    </script>
+</body>
+</html> 

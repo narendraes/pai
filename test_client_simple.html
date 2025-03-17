@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Mac Camera Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        pre { background-color: #f8f8f8; padding: 10px; border: 1px solid #ddd; overflow: auto; }
+        button { padding: 10px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Simple Mac Camera Test</h1>
+    
+    <div>
+        <button id="testButton">Test Connection</button>
+        <button id="healthButton">Health Check</button>
+        <button id="versionButton">Version Check</button>
+        <button id="listCamerasButton">List Cameras</button>
+    </div>
+    
+    <h2>Response:</h2>
+    <pre id="response">Click a button to test the API...</pre>
+    
+    <script>
+        document.getElementById('testButton').addEventListener('click', () => {
+            fetch('http://localhost:8080/health')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('response').textContent = 'Connection successful: ' + data;
+                })
+                .catch(error => {
+                    document.getElementById('response').textContent = 'Error: ' + error.message;
+                });
+        });
+        
+        document.getElementById('healthButton').addEventListener('click', () => {
+            fetch('http://localhost:8080/health')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('response').textContent = 'Health check: ' + data;
+                })
+                .catch(error => {
+                    document.getElementById('response').textContent = 'Error: ' + error.message;
+                });
+        });
+        
+        document.getElementById('versionButton').addEventListener('click', () => {
+            fetch('http://localhost:8080/version')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('response').textContent = 'Version info: ' + JSON.stringify(data, null, 2);
+                })
+                .catch(error => {
+                    document.getElementById('response').textContent = 'Error: ' + error.message;
+                });
+        });
+        
+        document.getElementById('listCamerasButton').addEventListener('click', () => {
+            // First make a request without the API key to test CORS
+            fetch('http://localhost:8080/api/v1/cameras')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('response').textContent = 'Cameras (no auth): ' + JSON.stringify(data, null, 2);
+                })
+                .catch(error => {
+                    document.getElementById('response').textContent = 'Error (trying without auth): ' + error.message + '\n\nNow trying with API key...';
+                    
+                    // Now try with the API key
+                    setTimeout(() => {
+                        fetch('http://localhost:8080/api/v1/cameras', {
+                            headers: {
+                                'X-API-Key': 'test-api-key'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('response').textContent += '\n\nCameras (with auth): ' + JSON.stringify(data, null, 2);
+                        })
+                        .catch(error => {
+                            document.getElementById('response').textContent += '\n\nError (with auth): ' + error.message;
+                        });
+                    }, 1000);
+                });
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Proxy API Test</title>
+</head>
+<body>
+    <h1>Proxy API Test</h1>
+    <button onclick="testHealth()">Test Health</button>
+    <button onclick="testVersion()">Test Version</button>
+    <button onclick="testCameras()">Test Cameras</button>
+    <pre id="output">Results will appear here...</pre>
+
+    <script>
+        // Use the proxy server instead of direct API calls
+        const PROXY_URL = 'http://localhost:8003';
+
+        function showResult(text) {
+            document.getElementById('output').textContent = text;
+        }
+
+        function testHealth() {
+            fetch(`${PROXY_URL}/health`)
+                .then(response => response.text())
+                .then(data => {
+                    showResult('Health: ' + data);
+                })
+                .catch(error => {
+                    showResult('Error: ' + error.message);
+                });
+        }
+
+        function testVersion() {
+            fetch(`${PROXY_URL}/version`)
+                .then(response => response.json())
+                .then(data => {
+                    showResult('Version: ' + JSON.stringify(data, null, 2));
+                })
+                .catch(error => {
+                    showResult('Error: ' + error.message);
+                });
+        }
+
+        function testCameras() {
+            fetch(`${PROXY_URL}/api/v1/cameras`, {
+                headers: {
+                    'X-API-Key': 'test-api-key'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                showResult('Cameras: ' + JSON.stringify(data, null, 2));
+            })
+            .catch(error => {
+                showResult('Error: ' + error.message);
+            });
+        }
+    </script>
+</body>
+</html> 

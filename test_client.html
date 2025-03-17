@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mac Camera Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        img { max-width: 100%; border: 1px solid #ddd; }
+        button { padding: 10px; margin: 5px; }
+        #debug { 
+            background-color: #f8f8f8; 
+            border: 1px solid #ddd; 
+            padding: 10px; 
+            margin-top: 20px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow: auto;
+        }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Mac Camera Test</h1>
+    
+    <div>
+        <button id="listCameras">List Cameras</button>
+        <button id="takeSnapshot">Take Snapshot</button>
+        <button id="startStream">Start Stream</button>
+        <button id="stopStream">Stop Stream</button>
+    </div>
+    
+    <div id="cameraList"></div>
+    
+    <h2>Camera View</h2>
+    <img id="cameraView" src="" alt="No image available">
+    
+    <h2>Debug Output</h2>
+    <div id="debug"></div>
+    
+    <script>
+        const API_KEY = 'test-api-key';
+        const BASE_URL = 'http://localhost:8080';
+        let streamId = null;
+        let streamInterval = null;
+        const debugElement = document.getElementById('debug');
+        
+        document.getElementById('listCameras').addEventListener('click', listCameras);
+        document.getElementById('takeSnapshot').addEventListener('click', takeSnapshot);
+        document.getElementById('startStream').addEventListener('click', startStream);
+        document.getElementById('stopStream').addEventListener('click', stopStream);
+        
+        function log(message, isError = false) {
+            const entry = document.createElement('div');
+            entry.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            entry.className = isError ? 'error' : 'success';
+            debugElement.appendChild(entry);
+            debugElement.scrollTop = debugElement.scrollHeight;
+            console.log(message);
+        }
+        
+        async function fetchWithAuth(url, options = {}) {
+            const headers = {
+                'X-API-Key': API_KEY,
+                ...options.headers
+            };
+            
+            log(`Fetching: ${url}`);
+            log(`Headers: ${JSON.stringify(headers)}`);
+            
+            try {
+                log(`Sending ${options.method || 'GET'} request to ${url}`);
+                const response = await fetch(url, { 
+                    ...options, 
+                    headers,
+                    mode: 'cors'
+                });
+                
+                log(`Response status: ${response.status} ${response.statusText}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+                }
+                
+                // For non-JSON responses (like images)
+                if (response.headers.get('content-type')?.includes('image/')) {
+                    return response;
+                }
+                
+                const data = await response.json();
+                log(`Response data: ${JSON.stringify(data)}`);
+                return response;
+            } catch (error) {
+                log(`Error: ${error.message}`, true);
+                throw error;
+            }
+        }
+        
+        async function listCameras() {
+            try {
+                log('Listing cameras...');
+                const response = await fetchWithAuth(`${BASE_URL}/api/v1/cameras`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const cameraList = document.getElementById('cameraList');
+                    cameraList.innerHTML = '<h2>Available Cameras</h2>';
+                    
+                    if (data.data.length === 0) {
+                        cameraList.innerHTML += '<p>No cameras found</p>';
+                        return;
+                    }
+                    
+                    const ul = document.createElement('ul');
+                    data.data.forEach(camera => {
+                        const li = document.createElement('li');
+                        li.textContent = `${camera.name} (${camera.position}) - ID: ${camera.id}`;
+                        
+                        const selectButton = document.createElement('button');
+                        selectButton.textContent = 'Select';
+                        selectButton.onclick = () => selectCamera(camera.id);
+                        li.appendChild(selectButton);
+                        
+                        ul.appendChild(li);
+                    });
+                    
+                    cameraList.appendChild(ul);
+                    log(`Found ${data.data.length} cameras`);
+                } else {
+                    log(`Failed to list cameras: ${data.error || 'Unknown error'}`, true);
+                }
+            } catch (error) {
+                log(`Error listing cameras: ${error.message}`, true);
+            }
+        }
+        
+        async function selectCamera(cameraId) {
+            try {
+                log(`Selecting camera: ${cameraId}`);
+                const response = await fetchWithAuth(`${BASE_URL}/api/v1/cameras/select`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cameraId })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    log('Camera selected successfully');
+                    alert('Camera selected successfully');
+                } else {
+                    log(`Failed to select camera: ${data.error || 'Unknown error'}`, true);
+                }
+            } catch (error) {
+                log(`Error selecting camera: ${error.message}`, true);
+            }
+        }
+        
+        async function takeSnapshot() {
+            try {
+                log('Taking snapshot...');
+                const response = await fetchWithAuth(`${BASE_URL}/api/v1/cameras/snapshot`);
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const imageUrl = URL.createObjectURL(blob);
+                    document.getElementById('cameraView').src = imageUrl;
+                    log('Snapshot taken successfully');
+                } else {
+                    log(`Failed to take snapshot: HTTP ${response.status}`, true);
+                }
+            } catch (error) {
+                log(`Error taking snapshot: ${error.message}`, true);
+            }
+        }
+        
+        async function startStream() {
+            try {
+                log('Starting stream...');
+                const response = await fetchWithAuth(`${BASE_URL}/api/v1/streams`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ quality: 'medium', frameRate: 15 })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    streamId = data.data.streamId;
+                    
+                    // Start fetching frames
+                    streamInterval = setInterval(fetchFrame, 100);
+                    
+                    log(`Stream started with ID: ${streamId}`);
+                } else {
+                    log(`Failed to start stream: ${data.error || 'Unknown error'}`, true);
+                }
+            } catch (error) {
+                log(`Error starting stream: ${error.message}`, true);
+            }
+        }
+        
+        async function stopStream() {
+            if (!streamId) {
+                log('No active stream to stop', true);
+                return;
+            }
+            
+            try {
+                log(`Stopping stream: ${streamId}`);
+                clearInterval(streamInterval);
+                
+                const response = await fetchWithAuth(`${BASE_URL}/api/v1/streams/${streamId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    log('Stream stopped successfully');
+                    streamId = null;
+                } else {
+                    log(`Failed to stop stream: ${data.error || 'Unknown error'}`, true);
+                }
+            } catch (error) {
+                log(`Error stopping stream: ${error.message}`, true);
+            }
+        }
+        
+        async function fetchFrame() {
+            if (!streamId) return;
+            
+            try {
+                const response = await fetchWithAuth(`${BASE_URL}/api/v1/streams/${streamId}/frame`);
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const imageUrl = URL.createObjectURL(blob);
+                    document.getElementById('cameraView').src = imageUrl;
+                } else {
+                    log(`Failed to fetch frame: HTTP ${response.status}`, true);
+                }
+            } catch (error) {
+                // Don't log every frame error to avoid flooding the debug area
+                console.error(`Error fetching frame: ${error.message}`);
+            }
+        }
+        
+        // Initial log
+        log('Test client loaded. Click "List Cameras" to begin.');
+    </script>
+</body>
+</html> 

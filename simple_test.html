@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Very Simple API Test</title>
+</head>
+<body>
+    <h1>API Test</h1>
+    <button onclick="testHealth()">Test Health</button>
+    <button onclick="testVersion()">Test Version</button>
+    <button onclick="testCameras()">Test Cameras</button>
+    <pre id="output">Results will appear here...</pre>
+
+    <script>
+        function showResult(text) {
+            document.getElementById('output').textContent = text;
+        }
+
+        function testHealth() {
+            fetch('http://localhost:8080/health')
+                .then(response => response.text())
+                .then(data => {
+                    showResult('Health: ' + data);
+                })
+                .catch(error => {
+                    showResult('Error: ' + error.message);
+                });
+        }
+
+        function testVersion() {
+            fetch('http://localhost:8080/version')
+                .then(response => response.json())
+                .then(data => {
+                    showResult('Version: ' + JSON.stringify(data, null, 2));
+                })
+                .catch(error => {
+                    showResult('Error: ' + error.message);
+                });
+        }
+
+        function testCameras() {
+            fetch('http://localhost:8080/api/v1/cameras', {
+                headers: {
+                    'X-API-Key': 'test-api-key'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                showResult('Cameras: ' + JSON.stringify(data, null, 2));
+            })
+            .catch(error => {
+                showResult('Error: ' + error.message);
+            });
+        }
+    </script>
+</body>
+</html> 

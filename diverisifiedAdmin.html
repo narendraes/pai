@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atlassian Admin Governance Evolution</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+        
+        .presentation-container {
+            width: 95%;
+            max-width: 1200px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .slide {
+            min-height: 700px;
+            padding: 60px;
+            display: none;
+            animation: slideIn 0.5s ease-in-out;
+        }
+        
+        .slide.active {
+            display: block;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .slide-header {
+            border-bottom: 3px solid #0052CC;
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            color: #0052CC;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        h2 {
+            color: #172B4D;
+            font-size: 2em;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        h3 {
+            color: #0052CC;
+            font-size: 1.5em;
+            margin: 30px 0 20px;
+        }
+        
+        .subtitle {
+            color: #6B778C;
+            font-size: 1.2em;
+        }
+        
+        .navigation {
+            background: #F4F5F7;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-button {
+            background: #0052CC;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .nav-button:hover {
+            background: #0747A6;
+            transform: translateY(-2px);
+        }
+        
+        .nav-button:disabled {
+            background: #B3BAC5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .slide-counter {
+            color: #6B778C;
+            font-size: 14px;
+        }
+        
+        .icon {
+            width: 40px;
+            height: 40px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+        
+        .card {
+            background: #F4F5F7;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 4px solid #0052CC;
+            transition: all 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .metric-card {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .metric-value {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .metric-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+        }
+        
+        .comparison-table th {
+            background: #0052CC;
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+        
+        .comparison-table td {
+            padding: 15px;
+            border-bottom: 1px solid #DFE1E6;
+        }
+        
+        .comparison-table tr:hover {
+            background: #F4F5F7;
+        }
+        
+        .timeline {
+            position: relative;
+            margin: 40px 0;
+        }
+        
+        .timeline-item {
+            display: flex;
+            margin-bottom: 30px;
+        }
+        
+        .timeline-marker {
+            width: 40px;
+            height: 40px;
+            background: #0052CC;
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 20px;
+            position: relative;
+        }
+        
+        .timeline-item:not(:last-child) .timeline-marker::after {
+            content: '';
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            width: 2px;
+            height: 50px;
+            background: #DFE1E6;
+            transform: translateX(-50%);
+        }
+        
+        .timeline-content {
+            flex: 1;
+        }
+        
+        .risk-matrix {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .risk-item {
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .risk-high {
+            background: #FFEBE6;
+            border: 2px solid #DE350B;
+        }
+        
+        .risk-medium {
+            background: #FFF0B3;
+            border: 2px solid #FF991F;
+        }
+        
+        .risk-low {
+            background: #E3FCEF;
+            border: 2px solid #00875A;
+        }
+        
+        .chart-container {
+            margin: 30px 0;
+            padding: 20px;
+            background: #F4F5F7;
+            border-radius: 10px;
+        }
+        
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 300px;
+            margin-top: 20px;
+        }
+        
+        .bar {
+            width: 80px;
+            background: linear-gradient(to top, #0052CC, #0747A6);
+            border-radius: 5px 5px 0 0;
+            position: relative;
+            transition: all 0.3s;
+        }
+        
+        .bar:hover {
+            transform: scaleY(1.05);
+        }
+        
+        .bar-label {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: bold;
+            color: #0052CC;
+        }
+        
+        .emphasis {
+            background: #DEEBFF;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+        
+        .warning {
+            background: #FFEBE6;
+            border-left: 4px solid #DE350B;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .success {
+            background: #E3FCEF;
+            border-left: 4px solid #00875A;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        ul {
+            margin-left: 30px;
+            line-height: 1.8;
+        }
+        
+        .role-hierarchy {
+            margin: 30px 0;
+            padding: 20px;
+            background: #F4F5F7;
+            border-radius: 10px;
+        }
+        
+        .role-tier {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            border-left: 4px solid #0052CC;
+        }
+        
+        .cta-section {
+            background: linear-gradient(135deg, #0052CC 0%, #0747A6 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 40px;
+        }
+        
+        .cta-section h3 {
+            color: white;
+            margin-bottom: 20px;
+        }
+        
+        .cta-button {
+            background: white;
+            color: #0052CC;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .cta-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <!-- Slide 1: Title Slide -->
+        <div class="slide active">
+            <div class="slide-header">
+                <h1>🚀 Evolving Atlassian Governance</h1>
+                <p class="subtitle">From Single Admin to Distributed Excellence</p>
+            </div>
+            <div style="text-align: center; margin: 60px 0;">
+                <svg class="icon" style="width: 200px; height: 200px;" viewBox="0 0 100 100">
+                    <circle cx="50" cy="30" r="15" fill="#0052CC"/>
+                    <circle cx="25" cy="70" r="12" fill="#36B37E"/>
+                    <circle cx="50" cy="70" r="12" fill="#36B37E"/>
+                    <circle cx="75" cy="70" r="12" fill="#36B37E"/>
+                    <line x1="50" y1="45" x2="25" y2="58" stroke="#6B778C" stroke-width="2"/>
+                    <line x1="50" y1="45" x2="50" y2="58" stroke="#6B778C" stroke-width="2"/>
+                    <line x1="50" y1="45" x2="75" y2="58" stroke="#6B778C" stroke-width="2"/>
+                </svg>
+            </div>
+            <div class="grid">
+                <div class="metric-card card">
+                    <div class="metric-value">2,000+</div>
+                    <div class="metric-label">Users Supported</div>
+                </div>
+                <div class="metric-card card">
+                    <div class="metric-value">15+</div>
+                    <div class="metric-label">Teams Enabled</div>
+                </div>
+                <div class="metric-card card">
+                    <div class="metric-value">4x</div>
+                    <div class="metric-label">Growth in 18 Months</div>
+                </div>
+            </div>
+            <div class="cta-section">
+                <h3>Strategic Initiative Q2 2024</h3>
+                <p>Transforming our Atlassian administration to scale with our ambitions</p>
+            </div>
+        </div>
+
+        <!-- Slide 2: Current State Strengths -->
+        <div class="slide">
+            <h2>✅ Current Model: What's Working Well</h2>
+            
+            <div class="grid">
+                <div class="card">
+                    <h3>🎯 Clear Ownership</h3>
+                    <p><strong>Example:</strong> Tempo Timesheets integration completed in 5 days</p>
+                    <ul>
+                        <li>100% accountability</li>
+                        <li>2-3 day decision time</li>
+                        <li>Zero orphaned initiatives</li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <h3>📞 Consistent Communication</h3>
+                    <p><strong>Example:</strong> Critical MS Teams issue resolved in 2 hours</p>
+                    <ul>
+                        <li>Single escalation path</li>
+                        <li>40% faster MTTR</li>
+                        <li>95% satisfaction rate</li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <h3>⚡ Operational Efficiency</h3>
+                    <p><strong>Example:</strong> JSM rollout with zero conflicts</p>
+                    <ul>
+                        <li>No duplicate licenses</li>
+                        <li>30% faster deployments</li>
+                        <li>Zero config conflicts</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="success">
+                <strong>Key Achievement:</strong> Our single-admin model has delivered <span class="emphasis">$150,000 in efficiency gains</span> through streamlined operations and rapid decision-making.
+            </div>
+        </div>
+
+        <!-- Slide 3: Current Challenges -->
+        <div class="slide">
+            <h2>⚠️ Growing Pains: Current Challenges</h2>
+            
+            <div class="risk-matrix">
+                <div class="risk-item risk-high">
+                    <h3>🚨 Critical Risk</h3>
+                    <p><strong>Single Point of Failure</strong></p>
+                    <p>2-week admin absence = $300K impact</p>
+                </div>
+                <div class="risk-item risk-high">
+                    <h3>🐌 Velocity Impact</h3>
+                    <p><strong>Innovation Bottleneck</strong></p>
+                    <p>6-week approval cycles killing momentum</p>
+                </div>
+                <div class="risk-item risk-medium">
+                    <h3>📈 Scale Limitations</h3>
+                    <p><strong>4x Workload Increase</strong></p>
+                    <p>48-hour queues becoming standard</p>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <h3>Impact of Admin Unavailability (2-Week Period)</h3>
+                <div class="bar-chart">
+                    <div class="bar" style="height: 40%">
+                        <span class="bar-value">$8k</span>
+                        <span class="bar-label">Day 1-3</span>
+                    </div>
+                    <div class="bar" style="height: 60%">
+                        <span class="bar-value">$45k</span>
+                        <span class="bar-label">Day 4-7</span>
+                    </div>
+                    <div class="bar" style="height: 85%">
+                        <span class="bar-value">$120k</span>
+                        <span class="bar-label">Day 8-10</span>
+                    </div>
+                    <div class="bar" style="height: 100%">
+                        <span class="bar-value">$300k</span>
+                        <span class="bar-label">Day 11-14</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="warning">
+                <strong>Audit Finding:</strong> Failed 2 of 7 SOC 2 segregation of duties controls. Single admin can create users, assign privileges, and delete audit logs.
+            </div>
+        </div>
+
+        <!-- Slide 4: Proposed Solution - RBAC -->
+        <div class="slide">
+            <h2>🔐 Solution 1: Role-Based Access Control</h2>
+            
+            <div class="role-hierarchy">
+                <div class="role-tier">
+                    <h3>Tier 1: Organization Owners (2 people)</h3>
+                    <p><strong>Who:</strong> Sarah Chen + CTO backup</p>
+                    <p><strong>Powers:</strong> Billing, contracts, SSO, critical security</p>
+                    <p><strong>Example:</strong> Only tier that can delete projects or change authentication</p>
+                </div>
+                
+                <div class="role-tier">
+                    <h3>Tier 2: Product Admins (5-7 people)</h3>
+                    <p

@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JPD Standardization - Executive Buy-in Presentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #2d3748;
+        }
+        
+        .presentation-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: fadeIn 1s ease-out;
+        }
+        
+        .presentation-title {
+            font-size: 2.5em;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .presentation-subtitle {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .presentation-container {
+            max-width: 1400px;
+            width: 100%;
+        }
+        
+        .slide {
+            background: white;
+            border-radius: 20px;
+            padding: 60px;
+            margin-bottom: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideIn 0.6s ease-out;
+            position: relative;
+            min-height: 600px;
+        }
+        
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #3182ce, #2c5282, #2d3748);
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .slide-number {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #3182ce, #2c5282);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.3em;
+        }
+        
+        h1 {
+            color: #1a202c;
+            font-size: 2.8em;
+            margin-bottom: 30px;
+            font-weight: 800;
+            text-align: center;
+            line-height: 1.2;
+        }
+        
+        h2 {
+            color: #2d3748;
+            font-size: 2em;
+            margin: 40px 0 25px;
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #3182ce, #2c5282);
+            border-radius: 2px;
+        }
+        
+        .tagline {
+            text-align: center;
+            font-size: 1.3em;
+            color: #4a5568;
+            font-style: italic;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            border-radius: 10px;
+        }
+        
+        /* Slide 1 - The Reality We Face */
+        .pain-points {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin: 40px 0;
+        }
+        
+        .pain-card {
+            background: linear-gradient(135deg, #fff5f5, #fed7d7);
+            border-left: 5px solid #e53e3e;
+            border-radius: 10px;
+            padding: 25px;
+            transition: all 0.3s;
+        }
+        
+        .pain-card:hover {
+            transform: translateX(10px);
+            box-shadow: 0 10px 30px rgba(229, 62, 62, 0.2);
+        }
+        
+        .pain-metric {
+            font-size: 2.5em;
+            font-weight: 800;
+            color: #c53030;
+            margin-bottom: 10px;
+        }
+        
+        .pain-label {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #742a2a;
+            margin-bottom: 10px;
+        }
+        
+        .pain-impact {
+            color: #4a5568;
+            line-height: 1.6;
+        }
+        
+        .personal-impact {
+            background: linear-gradient(135deg, #fef3c7, #fed7a3);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 40px 0;
+        }
+        
+        .impact-title {
+            color: #92400e;
+            font-size: 1.4em;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        
+        .impact-list {
+            list-style: none;
+        }
+        
+        .impact-list li {
+            padding: 12px 0;
+            padding-left: 35px;
+            position: relative;
+            color: #451a03;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+        
+        .impact-list li:before {
+            content: "😔";
+            position: absolute;
+            left: 0;
+            font-size: 1.3em;
+        }
+        
+        /* Slide 2 - The Strategic Solution */
+        .solution-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .solution-pillar {
+            background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .solution-pillar:hover {
+            transform: translateY(-10px);
+            border-color: #0284c7;
+            box-shadow: 0 20px 40px rgba(2, 132, 199, 0.2);
+        }
+        
+        .pillar-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        
+        .pillar-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #0c4a6e;
+            margin-bottom: 15px;
+        }
+        
+        .pillar-desc {
+            color: #334155;
+            line-height: 1.6;
+        }
+        
+        .work-types-visual {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 40px;
+            margin: 40px 0;
+        }
+        
+        .work-type-row {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 30px 0;
+        }
+        
+        .work-type-item {
+            text-align: center;
+            padding: 20px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+            flex: 1;
+            margin: 0 10px;
+        }
+        
+        .work-type-item:hover {
+            transform: scale(1.05);
+        }
+        
+        .type-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .type-name {
+            font-weight: 700;
+            font-size: 1.2em;
+            margin-bottom: 8px;
+        }
+        
+        .type-purpose {
+            font-size: 0.95em;
+            color: #64748b;
+            line-height: 1.4;
+        }
+        
+        .idea-type { background: linear-gradient(135deg, #dbeafe, #bfdbfe); }
+        .bet-type { background: linear-gradient(135deg, #dcfce7, #bbf7d0); }
+        .solution-type { background: linear-gradient(135deg, #fef3c7, #fde68a); }
+        .enabler-type { background: linear-gradient(135deg, #fee2e2, #fecaca); }
+        .experiment-type { background: linear-gradient(135deg, #f3e8ff, #e9d5ff); }
+        
+        /* Slide 3 - Your Journey, Your Pace */
+        .flexibility-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin: 40px 0;
+        }
+        
+        .keep-section, .gain-section {
+            padding: 30px;
+            border-radius: 15px;
+        }
+        
+        .keep-section {
+            background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+            border: 2px solid #22c55e;
+        }
+        
+        .gain-section {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            border: 2px solid #3b82f6;
+        }
+        
+        .section-title {
+            font-size: 1.6em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-icon {
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+        
+        .benefit-list {
+            list-style: none;
+        }
+        
+        .benefit-list li {
+            padding: 12px 0;
+            padding-left: 30px;
+            position: relative;
+            font-size: 1.05em;
+            line-height: 1.6;
+        }
+        
+        .benefit-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #16a34a;
+        }
+        
+        .gain-section .benefit-list li:before {
+            color: #2563eb;
+        }
+        
+        .adoption-timeline {
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 40px 0;
+        }
+        
+        .timeline-phase {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        
+        .timeline-phase:hover {
+            transform: translateX(20px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .phase-number {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.3em;
+            margin-right: 25px;
+            flex-shrink: 0;
+        }
+        
+        .phase-content {
+            flex: 1;
+        }
+        
+        .phase-title {
+            font-weight: 700;
+            font-size: 1.2em;
+            margin-bottom: 5px;
+            color: #1e293b;
+        }
+        
+        .phase-desc {
+            color: #64748b;
+            line-height: 1.5;
+        }
+        
+        /* Slide 4 - The Win-Win Outcome */
+        .outcome-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .outcome-card {
+            padding: 30px;
+            border-radius: 15px;
+            transition: all 0.3s;
+        }
+        
+        .outcome-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        
+        .you-win {
+            background: linear-gradient(135deg, #c7f9cc, #80ed99);
+            border: 2px solid #22c55e;
+        }
+        
+        .org-wins {
+            background: linear-gradient(135deg, #bfdbfe, #93c5fd);
+            border: 2px solid #3b82f6;
+        }
+        
+        .outcome-title {
+            font-size: 1.6em;
+            font-weight: 700;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .outcome-icon {
+            font-size: 1.5em;
+            margin-right: 15px;
+        }
+        
+        .outcome-metrics {
+            list-style: none;
+        }
+        
+        .outcome-metrics li {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .outcome-metrics li:hover {
+            transform: translateX(10px);
+        }
+        
+        .metric-value {
+            font-size: 1.8em;
+            font-weight: 800;
+            margin-right: 15px;
+            color: #059669;
+            min-width: 80px;
+        }
+        
+        .org-wins .metric-value {
+            color: #2563eb;
+        }
+        
+        .metric-label {
+            flex: 1;
+            color: #334155;
+            font-weight: 500;
+        }
+        
+        /* Slide 5 - Your Next Steps */
+        .cta-container {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        .cta-title {
+            font-size: 2em;
+            font-weight: 800;
+            color: #78350f;
+            margin-bottom: 20px;
+        }
+        
+        .cta-subtitle {
+            font-size: 1.2em;
+            color: #92400e;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .action-steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin: 40px 0;
+        }
+        
+        .action-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .action-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+        
+        .action-number {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin: 0 auto 15px;
+        }
+        
+        .action-title {
+            font-weight: 700;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #1e293b;
+        }
+        
+        .action-desc {
+            color: #64748b;
+            line-height: 1.5;
+            font-size: 0.95em;
+        }
+        
+        .support-box {
+            background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 40px 0;
+        }
+        
+        .support-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #0c4a6e;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .support-items {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        
+        .support-item {
+            text-align: center;
+            padding: 20px;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .support-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .support-label {
+            font-weight: 600;
+            color: #0c4a6e;
+        }
+        
+        /* Slide 6 - Success Stories */
+        .success-stories {
+            margin: 40px 0;
+        }
+        
+        .story-card {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border-left: 5px solid #22c55e;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 20px 0;
+            transition: all 0.3s;
+        }
+        
+        .story-card:hover {
+            transform: translateX(10px);
+            box-shadow: 0 10px 30px rgba(34, 197, 94, 0.2);
+        }
+        
+        .story-quote {
+            font-style: italic;
+            font-size: 1.1em;
+            color: #14532d;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .story-author {
+            font-weight: 700;
+            color: #166534;
+        }
+        
+        .story-role {
+            color: #15803d;
+            font-size: 0.95em;
+        }
+        
+        .final-message {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        .final-title {
+            font-size: 2.2em;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+        
+        .final-text {
+            font-size: 1.2em;
+            line-height: 1.8;
+            opacity: 0.95;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-header">
+        <h1 class="presentation-title">JPD Standardization Initiative</h1>
+        <p class="presentation-subtitle">Empowering Product Leaders to Drive Strategic Impact</p>
+    </div>
+    
+    <div class="presentation-container">
+        
+        <!-- Slide 1: The Reality We Face -->
+        <div class="slide">
+            <div class="slide-number">1</div>
+            <h1>The Reality We Face Today</h1>
+            <p class="tagline">"We're all fighting the same battles, just in different silos"</p>
+            
+            <div class="pain-points">
+                <div class="pain-card">
+                    <div class="pain-metric">15+ hrs</div>
+                    <div class="pain-label">Weekly Manual Reporting</div>
+                    <div class="pain-impact">Time you could spend on strategy, customer interviews, or innovation</div>
+                </div>
+                
+                <div class="pain-card">
+                    <div class="pain-metric">200+</div>
+                    <div class="pain-label">Custom Fields Chaos</div>
+                    <div class="pain-impact">70% duplicate effort across teams, no unified view</div>
+                </div>
+                
+                <div class="pain-card">
+                    <div class="pain-metric">5,000+</div>
+                    <div class="pain-label">Undifferentiated "Ideas"</div>
+                    <div class="pain-impact">Strategic initiatives buried among minor tweaks</div>
+                </div>
+                
+                <div class="pain-card">
+                    <div class="pain-metric">Zero</div>
+                    <div class="pain-label">Portfolio Visibility</div>
+                    <div class="pain-impact">Leadership asks questions you can't easily answer</div>
+                </div>
+            </div>
+            
+            <div class="personal-impact">
+                <div class="impact-title">What This Means for You as a Product Leader:</div>
+                <ul class="impact-list">
+                    <li>Your strategic initiatives get lost in the noise of operational tasks</li>
+                    <li>You spend more time in spreadsheets than with customers</li>
+                    <li>Your team's great work is invisible to leadership</li>
+                    <li>Cross-team dependencies surprise you at the worst moments</li>
+                    <li>You can't easily show the business impact of your decisions</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Slide 2: The Strategic Solution -->
+        <div class="slide">
+            <div class="slide-number">2</div>
+            <h1>A Proven Framework for Product Excellence</h1>
+            <p class="tagline">"Structure that empowers, not constrains"</p>
+            
+            <div class="solution-grid">
+                <div class="solution-pillar">
+                    <div class="pillar-icon">🎯</div>
+                    <div class="pillar-title">Strategic Work Items</div>
+                    <div class="pillar-desc">Five clear types that speak the language of business, not just development</div>
+                </div>
+                
+                <div class="solution-pillar">
+                    <div class="pillar-icon">🔄</div>
+                    <div class="pillar-title">Flexible Workflows</div>
+                    <div class="pillar-desc">Global consistency with local customization through flow states</div>
+                </div>
+                
+                <div class="solution-pillar">
+                    <div class="pillar-icon">📊</div>
+                    <div class="pillar-title">Smart Fields</div>
+                    <div class="pillar-desc">80% global for reporting, 20% local for your unique needs</div>
+                </div>
+            </div>
+            
+            <h2>Work Item Types That Make Sense</h2>
+            <div class="work-types-visual">
+                <div class="work-type-row">
+                    <div class="work-type-item idea-type">
+                        <div class="type-icon">💡</div>
+                        <div class="type-name">Idea</div>
+                        <div class="type-purpose">Strategic concepts & opportunities</div>
+                    </div>
+                    
+                    <div class="work-type-item bet-type">
+                        <div class="type-icon">🚀</div>
+                        <div class="type-name">Bet</div>
+                        <div class="type-purpose">Major capability investments</div>
+                    </div>
+                    
+                    <div class="work-type-item solution-type">
+                        <div class="type-icon">✨</div>
+                        <div class="type-name">Solution</div>
+                        <div class="type-purpose">Customer-facing value</div>
+                    </div>
+                    
+                    <div class="work-type-item enabler-type">
+                        <div class="type-icon">🔧</div>
+                        <div class="type-name">Enabler</div>
+                        <div class="type-purpose">Platform health & efficiency</div>
+                    </div>
+                    
+                    <div class="work-type-item experiment-type">
+                        <div class="type-icon">🧪</div>
+                        <div class="type-name">Experiment</div>
+                        <div class="type-purpose">Risk reduction & learning</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 3: Your Journey, Your Pace -->
+        <div class="slide">
+            <div class="slide-number">3</div>
+            <h1>Your Experience + Our Framework = Success</h1>
+            <p class="tagline">"We're not replacing your expertise, we're amplifying it"</p>
+            
+            <div class="flexibility-container">
+                <div class="keep-section">
+                    <div class="section-title">
+                        <span class="section-icon">✅</span>
+                        What You Keep
+                    </div>
+                    <ul class="benefit-list">
+                        <li>Your deep product knowledge and customer insights</li>
+                        <li>Your team's unique processes that work well</li>
+                        <li>Your established stakeholder relationships</li>
+                        <li>Your product's specific success metrics</li>
+                        <li>The ability to customize for your context</li>
+                    </ul>
+                </div>
+                
+                <div class="gain-section">
+                    <div class="section-title">
+                        <span class="section-icon">🎁</span>
+                        What You Gain
+                    </div>
+                    <ul class="benefit-list">
+                        <li>Executive visibility into your strategic impact</li>
+                        <li>Automated reporting that saves hours weekly</li>
+                        <li>Clear framework for prioritization decisions</li>
+                        <li>Cross-team collaboration without the chaos</li>
+                        <li>Data-driven conversations with stakeholders</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <h2>Adopt at Your Own Pace</h2>
+            <div class="adoption-timeline">
+                <div class="timeline-phase">
+                    <div class="phase-number">1</div>
+                    <div class="phase-content">
+                        <div class="phase-title">Start Simple (Week 1)</div>
+                        <div class="phase-desc">Just categorize new items with the 5 types. Keep everything else the same. See immediate clarity in your backlog.</div>
+                    </div>
+                </div>
+                
+                <div class="timeline-phase">
+                    <div class="phase-number">2</div>
+                    <div class="phase-content">
+                        <div class="phase-title">Add Value (Month 1)</div>
+                        <div class="phase-desc">Adopt 3-5 global fields that matter most. Watch your reporting time drop by 50%.</div>
+                    </div>
+                </div>
+                
+                <div class="timeline-phase">
+                    <div class="phase-number">3</div>
+                    <div class="phase-content">
+                        <div class="phase-title">Scale Impact (Quarter 1)</div>
+                        <div class="phase-desc">Full framework adoption. Become the PM who always has the data, the visibility, and the strategic answers.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 4: The Win-Win Outcome -->
+        <div class="slide">
+            <div class="slide-number">4</div>
+            <h1>Everyone Wins With Standardization</h1>
+            <p class="tagline">"Success isn't zero-sum—when the system works, we all rise"</p>
+            
+            <div class="outcome-grid">
+                <div class="outcome-card you-win">
+                    <div class="outcome-title">
+                        <span class="outcome-icon">🏆</span>
+                        You Win
+                    </div>
+                    <ul class="outcome-metrics">
+                        <li>
+                            <span class="metric-value">60%</span>
+                            <span class="metric-label">Less time on manual reporting</span>
+                        </li>
+                        <li>
+                            <span class="metric-value">3x</span>
+                            <span class="metric-label">Faster executive decision making</span>
+                        </li>
+                        <li>
+                            <span class="metric-value">100%</span>
+                            <span class="metric-label">Visibility into dependencies before they block</span>
+                        </li>
+                        <li>
+                            <span class="metric-value">2x</span>
+                            <span class="metric-label">More time for strategic work</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="outcome-card org-wins">
+                    <div class="outcome-title">
+                        <span class="outcome-icon">🏢</span>
+                        Organization Wins
+                    </div>
+                    <ul class="outcome-metrics">
+                        <li>
+                            <span class="metric-value">40%</span>
+                            <span class="metric-label">Faster time to market</span>
+                        </li>
+                        <li>
+                            <span class="metric-value">85%</span>
+                            <span class="metric-label">Strategic alignment across teams</span>
+                        </li>
+                        <li>
+                            <span class="metric-value">50%</span>
+                            <span class="metric-label">Reduction in duplicate efforts</span>
+                        </li>
+                        <li>
+                            <span class="metric-value">ROI</span>
+                            <span class="metric-label">Clear investment tracking & outcomes</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <h2>For Our Waterfall-Transitioning Colleagues</h2>
+            <div class="personal-impact" style="background: linear-gradient(135deg, #e0f2fe, #bae6fd);">
+                <div class="impact-title" style="color: #0c4a6e;">This Framework Bridges Your Experience</div>
+                <ul class="benefit-list">
+                    <li>✓ Clear phases and gates (through workflow states) that feel familiar</li>
+                    <li>✓ Structured decision points you're comfortable with</li>
+                    <li>✓ Documentation and traceability you value</li>
+                    <li>✓ But with the agility and iteration modern products need</li>
+                    <li>✓ Your planning expertise becomes even more valuable here</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Slide 5: Your Next Steps -->
+        <div class="slide">
+            <div class="slide-number">5</div>
+            <h1>Join Us in Building Something Better</h1>
+            
+            <div class="cta-container">
+                <div class="cta-title">You Have the Power to Choose</div>
+                <div class="cta-subtitle">Start small, see value immediately, scale at your comfort</div>
+            </div>
+            
+            <div class="action-steps">
+                <div class="action-card">
+                    <div class="action-number">1</div>
+                    <div class="action-title">Try It (No Risk)</div>
+                    <div class="action-desc">Pilot with your next 10 items. Keep your old system running in parallel.</div>
+                </div>
+                
+                <div class="action-card">
+                    <div class="action-number">2</div>
+                    <div class="action-title">Shape It</div>
+                    <div class="action-desc">Your feedback directly influences the framework. Be a founding voice.</div>
+                </div>
+                
+                <div class="action-card">
+                    <div class="action-number">3</div>
+                    <div class="action-title">Lead It</div>
+                    <div class="action-desc">Become a champion. Help other PMs succeed. Build your influence.</div>
+                </div>
+            </div>
+            
+            <div class="support-box">
+                <div class="support-title">You're Not Alone in This Journey</div>
+                <div class="support-items">
+                    <div class="support-item">
+                        <div class="support-icon">👥</div>
+                        <div class="support-label">Dedicated PM Support Team</div>
+                    </div>
+                    <div class="support-item">
+                        <div class="support-icon">📚</div>
+                        <div class="support-label">Comprehensive Training</div>
+                    </div>
+                    <div class="support-item">
+                        <div class="support-icon">🛠️</div>
+                        <div class="support-label">Migration Assistance</div>
+                    </div>
+                    <div class="support-item">
+                        <div class="support-icon">🎯</div>
+                        <div class="support-label">Success Coaching</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 6: Success Stories & Final Call -->
+        <div class="slide">
+            <div class="slide-number">6</div>
+            <h1>PMs Like You Are Already Winning</h1>
+            
+            <div class="success-stories">
+                <div class="story-card">
+                    <div class="story-quote">"I went from spending 8 hours on quarterly planning reports to 30 minutes. The executive team now comes to ME for portfolio insights."</div>
+                    <div class="story-author">Sarah Chen</div>
+                    <div class="story-role">Senior PM, Platform Team (15 years experience, ex-Microsoft)</div>
+                </div>
+                
+                <div class="story-card">
+                    <div class="story-quote">"As someone who came from traditional project management, this framework gave me the structure I needed while teaching me agile thinking. Best of both worlds."</div>
+                    <div class="story-author">Michael Torres</div>
+                    <div class="story-role">Product Lead, Enterprise Solutions (Transitioned from Waterfall)</div>
+                </div>
+                
+                <div class="story-card">
+                    <div class="story-quote">"My team was skeptical at first. After one sprint with the new structure, they asked why we didn't do this sooner. Dependencies are visible, priorities are clear."</div>
+                    <div class="story-author">Priya Patel</div>
+                    <div class="story-role">Director of Product (Managing 5 PMs)</div>
+                </div>
+            </div>
+            
+            <div class="final-message">
+                <div class="final-title">The Choice Is Yours</div>
+                <div class="final-text">
+                    Continue fighting the same battles in isolation,<br>
+                    or join us in building a system where your expertise shines,<br>
+                    your impact is visible, and your time is valued.<br><br>
+                    <strong>Let's transform product management together.</strong>
+                </div>
+            </div>
+            
+            <div class="cta-container" style="margin-top: 40px;">
+                <div class="cta-title">Ready to Start?</div>
+                <div class="cta-subtitle">
+                    Schedule your 1:1 onboarding session this week<br>
+                    Email: productops@company.com | Slack: #jpd-transformation<br><br>
+                    <strong>First 20 PMs to join become founding advisors to shape our future</strong>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</body>
+</html>
